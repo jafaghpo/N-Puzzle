@@ -1,28 +1,19 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.c                                             :+:      :+:    :+:   */
+/*   error.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: ggregoir <ggregoir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2019/02/19 13:20:36 by ggregoir          #+#    #+#             */
-/*   Updated: 2019/02/20 11:14:17 by ggregoir         ###   ########.fr       */
+/*   Created: 2019/02/19 18:12:29 by ggregoir          #+#    #+#             */
+/*   Updated: 2019/02/19 18:15:12 by ggregoir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "npuzzle.h"
 
-int	main(int argc, char **argv)
+void	exit_program(char *error_message)
 {
-	char *file;
-	t_node *initial_state;
-	t_info info;
-
-	printf("argc = %d\n", argc);
-	file = ft_filetostr(argv[1]);
-	initial_state = parse_file(file, &info);
-	//goal = generate_goal(info)    t_info  
-	// a * solver
-	free(file);
-	return 0;
+	printf("%s\n", error_message);
+	exit(EXIT_FAILURE);
 }

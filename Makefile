@@ -6,7 +6,7 @@
 #    By: ggregoir <ggregoir@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2019/02/19 12:38:42 by ggregoir          #+#    #+#              #
-#    Updated: 2019/02/19 16:31:58 by ggregoir         ###   ########.fr        #
+#    Updated: 2019/02/20 11:14:57 by ggregoir         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -22,7 +22,7 @@ else
 	CFLAGS	+=	-Ofast
 endif
 
-SRCS		=	main.c file.c
+SRCS		=	main.c file.c parse.c error.c
 SRC			=	$(addprefix src/, $(SRCS))
 OBJ			=	$(addprefix obj/, $(SRCS:.c=.o))
 INCL_DIR	=	include

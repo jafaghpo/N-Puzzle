@@ -6,7 +6,7 @@
 /*   By: ggregoir <ggregoir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/02/19 13:01:14 by ggregoir          #+#    #+#             */
-/*   Updated: 2019/02/19 16:36:35 by ggregoir         ###   ########.fr       */
+/*   Updated: 2019/02/20 11:16:45 by ggregoir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,33 +22,21 @@ char	*ft_filetostr(char *file)
 
 	str = NULL;
 	if ((fd = open(file, O_RDONLY)) == -1)
-	{
-		printf("error open in ft_filetostr\n");
-		exit(EXIT_FAILURE);
-	}
+		exit_program("error open in ft_filetostr\n");
 	
 	fstat(fd, &st);
 	if ((size = st.st_size) > MAX_FILE_SIZE)
-	{
-		printf("file must not exceed 200mo\n");
-		exit(EXIT_FAILURE);
-	}
+		exit_program("file must not exceed 200mo\n");
 
 	if (!(str = malloc(size + 1)))
-	{
-		printf("malloc error in ft_filetostr\n");
-		exit(EXIT_FAILURE);
-	}
+		exit_program("malloc error in ft_filetostr\n");
+
 	if ((read(fd, str, size)) < 0)
-	{
-		printf("error read file in ft_filetostr\n");
-		exit(EXIT_FAILURE);
-	}
+		exit_program("error read file in ft_filetostr\n");
+
 	str[size] = '\0';
 	if (close(fd) == -1)
-	{
-		printf("error close in ft_filetostr\n");
-		exit(EXIT_FAILURE);
-	}
+		exit_program("error close in ft_filetostr\n");
+	
 	return (str);
 }

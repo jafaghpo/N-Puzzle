@@ -6,7 +6,7 @@
 /*   By: ggregoir <ggregoir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/02/19 17:12:30 by ggregoir          #+#    #+#             */
-/*   Updated: 2019/02/22 18:14:00 by ggregoir         ###   ########.fr       */
+/*   Updated: 2019/02/25 15:49:35 by ggregoir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,7 +92,8 @@ static void get_initial_state(char *file, int *cursor, t_info *info, t_node *ini
 					*cursor+=1;
 				}
 			}
-			*cursor+=1;
+			else
+				*cursor+=1;
 		}
 		columns++;
 		lines = 0;

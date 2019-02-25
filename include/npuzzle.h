@@ -6,7 +6,7 @@
 /*   By: ggregoir <ggregoir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/02/19 12:55:02 by ggregoir          #+#    #+#             */
-/*   Updated: 2019/02/22 17:29:09 by ggregoir         ###   ########.fr       */
+/*   Updated: 2019/02/25 16:36:19 by ggregoir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,16 +32,17 @@ typedef struct	s_info		t_info;
 
 struct s_node
 {
-	//t_node	*parent;
+	t_node	*parent;
 	int8_t	**map;
-	//uint8_t	f;
-	//uint8_t	h;
-	//uint8_t	g;
+	uint8_t	f;
+	uint8_t	h;
+	uint8_t	g;
 };
 
 struct s_info
 {
 	int8_t	grid_size;
+	
 };
 
 enum e_heuristic
@@ -64,5 +65,6 @@ enum e_algo
 char	*ft_filetostr(char *file);
 t_node *parse_file(char *file, t_info *info);
 void	exit_program(char *error_message);
+void	print_map(t_node *initial_state, t_info info);
 
 #endif

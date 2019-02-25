@@ -1,30 +1,13 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.c                                             :+:      :+:    :+:   */
+/*   parse_args.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: ggregoir <ggregoir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2019/02/19 13:20:36 by ggregoir          #+#    #+#             */
-/*   Updated: 2019/02/25 16:29:15 by ggregoir         ###   ########.fr       */
+/*   Created: 2019/02/25 16:27:08 by ggregoir          #+#    #+#             */
+/*   Updated: 2019/02/25 16:27:12 by ggregoir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "npuzzle.h"
-
-int	main(int argc, char **argv)
-{
-	char *file;
-	t_node *initial_state;
-	t_info info;
-
-	info = parse_args(int argc, char **argv);
-	printf("argc = %d\n", argc);
-	file = ft_filetostr(argv[1]);
-	initial_state = parse_file(file, &info);
-	free(file);
-	print_map(initial_state, info);
-	//goal = generate_goal(info)    t_info  
-	// a * solver
-	return 0;
-}
+parse_args(argc)

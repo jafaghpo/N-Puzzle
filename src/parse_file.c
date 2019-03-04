@@ -6,7 +6,7 @@
 /*   By: ggregoir <ggregoir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/02/19 17:12:30 by ggregoir          #+#    #+#             */
-/*   Updated: 2019/03/04 17:52:42 by ggregoir         ###   ########.fr       */
+/*   Updated: 2019/03/04 18:07:29 by ggregoir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -154,7 +154,7 @@ t_node			*parse_file(char *file, t_info *info)
 	t_node	*initial_state;
 
 	cursor = 0;
-	*initial_state = NULL;
+	initial_state = NULL;
 	info->grid_size = get_grid_size(file, &cursor);
 	initial_state = get_initial_state(file, &cursor, info);
 	return (initial_state);

@@ -6,11 +6,11 @@
 /*   By: ggregoir <ggregoir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/02/25 16:27:08 by ggregoir          #+#    #+#             */
-/*   Updated: 2019/03/04 17:16:21 by ggregoir         ###   ########.fr       */
+/*   Updated: 2019/03/04 18:35:42 by ggregoir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-t_info parse_args(int argc, char **argv)
-{
+#include "npuzzle.h"
 
-}
+//t_info parse_args(int argc, char **argv)
+

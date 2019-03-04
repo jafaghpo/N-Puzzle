@@ -6,7 +6,7 @@
 /*   By: ggregoir <ggregoir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/02/19 12:55:02 by ggregoir          #+#    #+#             */
-/*   Updated: 2019/03/02 19:37:51 by ggregoir         ###   ########.fr       */
+/*   Updated: 2019/03/04 18:34:19 by ggregoir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,5 +66,6 @@ char	*ft_filetostr(char *file);
 t_node *parse_file(char *file, t_info *info);
 void	exit_program(char *error_message);
 void	print_map(t_node *initial_state, t_info info);
+t_info parse_args(int argc, char **argv);
 
 #endif

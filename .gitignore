@@ -28,6 +28,7 @@
 *.dylib
 
 # Executables
+npuzzle
 *.exe
 *.out
 *.app

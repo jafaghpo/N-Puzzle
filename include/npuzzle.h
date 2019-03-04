@@ -6,7 +6,7 @@
 /*   By: ggregoir <ggregoir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/02/19 12:55:02 by ggregoir          #+#    #+#             */
-/*   Updated: 2019/02/25 16:36:19 by ggregoir         ###   ########.fr       */
+/*   Updated: 2019/03/02 19:37:51 by ggregoir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,15 +33,15 @@ typedef struct	s_info		t_info;
 struct s_node
 {
 	t_node	*parent;
-	int8_t	**map;
-	uint8_t	f;
-	uint8_t	h;
-	uint8_t	g;
+	int32_t	**map;
+	uint32_t	f;
+	uint32_t	h;
+	uint32_t	g;
 };
 
 struct s_info
 {
-	int8_t	grid_size;
+	int32_t	grid_size;
 	
 };
 

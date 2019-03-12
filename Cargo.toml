@@ -1,0 +1,8 @@
+[package]
+name = "npuzzle"
+version = "0.1.0"
+authors = ["jafaghpo <jafaghpo@student.42.fr>"]
+edition = "2018"
+
+[dependencies]
+clap = { version = "2.32.0", features = ["yaml"] }

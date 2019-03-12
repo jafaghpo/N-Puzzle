@@ -1,0 +1,40 @@
+name: N-Puzzle
+version: "0.1"
+author: John Afaghpour <jafaghpo@student.42.com> and Guillaume Gregoire <ggregoir@student.42.fr>
+about: Implementation of the fifteen-puzzle game with variable puzzle length and configurable algorithms & heuristics
+args:
+    - file:
+        help: Path to the file containing the initial state of the puzzle
+        required: true
+        index: 1
+    - goal_state:
+        help: Structure of the goal state
+        short: g
+        long: goal
+        possible_values:
+            - snail
+            - ascending
+            - descending
+        default_value: snail
+    - algorithm:
+        help: Algorithms used to solve the puzzle.
+        short: a
+        long: algo
+        possible_values:
+            - a_star
+            - beam
+            - greedy
+            - uniform_cost
+        default_value: a_star
+    - heuristic_function:
+        help: Heuristic used to solve the puzzle.
+        short: h
+        long: heuristic
+        possible_values:
+            - misplaced_tiles
+            - manhattan_distance
+            - linear_conflict
+            - out_of_axes
+            - euclidian_distance
+        default_value: manhattan_distance
+

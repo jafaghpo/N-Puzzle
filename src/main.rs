@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.rs                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jafaghpo <jafaghpo@student.42.fr>          +#+  +:+       +#+        */
+/*   By: john <john@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/03/13 15:45:44 by ggregoir          #+#    #+#             */
-/*   Updated: 2019/03/14 19:03:15 by jafaghpo         ###   ########.fr       */
+/*   Updated: 2019/03/15 13:25:11 by john             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,11 @@ use clap::App;
 use std::fs;
 use std::process::exit;
 
+mod checker;
+use checker::{check_puzzle};
+
 // TODO:
+// Generate goal state depending on goal mode
 // Check if the puzzle is solvable 
 
 // Display error message on standard error and exit program
@@ -26,59 +30,26 @@ fn exit_program(message: &str)
 	exit(1);
 }
 
-// Check the puzzle content and returns a vector containing all the tiles
-fn check_puzzle(lines: Vec<Vec<&str>>, size: usize) -> Result<Vec<usize>, String>
+fn main()
 {
-	// Check if the number of rows and colums is equal to the puzzle size
-	if lines.len() != size { return Err("invalid number of rows".to_string()); }
-	if !lines.iter().all(|line| line.len() == size) { return Err("invalid number of colums".to_string()); }
-
-	// Check if the tiles are positive numbers and are in range
-	let mut tiles: Vec<usize> = vec![];
-	for line in lines
-	{
-		for number in line
-		{
-			let n: String = number.to_string();
-			match number.parse()
-			{
-				Ok(n) if n <= size.pow(2) - 1 => { tiles.push(n) },
-				Err(_) => { return Err(format!("invalid number '{}'", n)) },
-				_ => { return Err(format!("number not in range '{}'", n)); }
-			}
-		}
-	}
-
-	// Check if there is duplicate numbers
-	let mut number_list: Vec<bool> = vec![false; size.pow(2)];
-	for number in &tiles
-	{
-		match number_list[*number]
-		{
-			true =>	{ return Err(format!("duplicate of '{}'", number)) },
-			false => { number_list[*number] = true }
-		}
-	}
-	return Ok(tiles);
-}
-
-fn main() 
-{
-	// Command-line argument parser
-	let yaml = load_yaml!("man.yml");
+	// Read syntax from cli.yml (Command Line Interpretor)
+	// parse the command line arguments and return the matches
+	let yaml = load_yaml!("cli.yml");
 	let matches = App::from_yaml(yaml).get_matches();
 	let filename = matches.value_of("file").unwrap();
-	let _goal = matches.value_of("goal_state").unwrap();
+	let _goal = matches.value_of("goal_style").unwrap();
 	let _algo = matches.value_of("algorithm").unwrap();
 	let _heuristic = matches.value_of("heuristic_function").unwrap();
 
-	// File reader
+	// Open an copy the file content into a string
     let mut file = String::new();
 	match fs::read_to_string(filename)
 	{
-		Ok(f)	=> file = f,
-		Err(_)	=> exit_program("invalid file path")
+		Ok(f) => file = f,
+		Err(_) => exit_program("invalid file path")
 	}
+
+	if file.is_empty() { exit_program("file is empty") }
 
 	// Filter comments and empty lines from file
 	let mut lines: Vec<&str> = file
@@ -91,8 +62,8 @@ fn main()
 	let mut size = 0usize;
 	match lines.remove(0).parse()
 	{
-		Ok(s) if s >= 2	=> size = s,
-		Err(_) | _		=> exit_program("invalid puzzle size")
+		Ok(s) if (s >= 3 && s <= 100) => size = s,
+		Err(_) | _ => exit_program("invalid puzzle size")
 	}
 
 	// Divide each lines into words
@@ -109,6 +80,7 @@ fn main()
 		Err(e) => exit_program(&e)
 	}
 
+	// DEBUG
 	println!("size: {}", size);
 	println!("tiles: {:?}", tiles);
 }

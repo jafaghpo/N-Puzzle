@@ -7,14 +7,14 @@ args:
         help: Path to the file containing the initial state of the puzzle
         required: true
         index: 1
-    - goal_style:
+    - goal_mode:
         help: Style of the goal state
         short: g
         long: goal
         possible_values:
             - snail
-            - ascending
-            - descending
+            - classic
+            - reversed
         default_value: snail
     - algorithm:
         help: Algorithms used to solve the puzzle.

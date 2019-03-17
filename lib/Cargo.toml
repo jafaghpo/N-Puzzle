@@ -1,5 +1,5 @@
 [package]
-name = "npuzzle"
+name = "npuzzle_lib"
 version = "0.1.0"
 authors = [
 	"jafaghpo <jafaghpo@student.42.fr>",
@@ -7,12 +7,4 @@ authors = [
 ]
 edition = "2018"
 
-[lib]
-name = "npuzzle_lib"
-path = "lib/src/lib.rs"
-test = true
-harness = true
-
-
 [dependencies]
-clap = { version = "2.32.0", features = ["yaml"] }

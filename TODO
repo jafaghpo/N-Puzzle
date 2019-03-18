@@ -3,21 +3,21 @@ Tasks (in order):
 [X] Get file content and filter it to remove comments and empty lines
 [X] Check puzzle size (as N in range [3, 100])
 [X] Check puzzle validity (puzzle size, correct number of cols and rows, valid numbers, numbers in range, duplicate numbers)
-[ ] Generate goal state depending on its style (snail, ascending or descending)
-[ ] Check if the puzzle is solvable
+[X] Generate goal state depending on its style (snail, ascending or descending)
+[X] Check if the puzzle is solvable
+[X] Create Unit tests and Integration tests
+[ ] Create a generator of random puzzles available from command line
+[ ] Decide to use either async (if possible) or multithreading
 [ ] Create heuristic functions
 [ ] Create open set as a priority queue with F cost as priority
 [ ] Create close set as a hash map (see Optimization section)
 [ ] Create A* algo with its variants (beam, greedy, uniform cost)
 [ ] Create function(s) to print solution (complexity of time & memory, number of moves, each state of final path, exec time)
-[ ] Create Unit tests
 [ ] Build UI in JS and link it to project with webassembly
 [ ] Build a play mode for UI
 
 Optimizations:
 (MT) tag stands for MultiThreading. Every optimizations with (MT) tag will run at the same time and wait for each other
-
-- Create a 'Tile' type corresponding to tile numbers. Contains a u16. Also define Npuzzle size as u8
 
 - (MT) Run heuristic function on state of possible moves at the same time with multithreading
 
@@ -25,10 +25,10 @@ Optimizations:
 	=> for state 'S' of length 'N' as [7, 3, 2, ..., X] and hash 'H' as 0
 	=> for i=0...N -> H = X * H + S[i]
 
-- Create goal state as Vector<Tile> with tile values as indexes and their indexes as values
+- Create goal state as Vector<usize> with tile values as indexes and their indexes as values
 	=> This enables an easy access of goal position for a specific tile to calculate heuristic value faster
 
-- Create each state as Vector<Tile> inside a 'State' structure and keep position of empty tile
+- Create each state as Vector<usize> inside a 'State' structure and keep position of empty tile
 	=> This enables to access directly the tile to move and do simple maths to know positions of possible moves
 	=> for empty position 'E' and puzzle size 'N' as in 'N'-Puzzle:
 		- E - N to move UP
@@ -36,4 +36,4 @@ Optimizations:
 		- E - 1 to move LEFT
 		- E + 1 to move RIGHT
 
-- Put #[inline] tag for small functions called many times to speed up runtime
+- Put #[inline] tag for small functions called many times in solver to speed up runtime

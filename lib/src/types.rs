@@ -1,12 +1,11 @@
-pub type Tile = usize;
-pub type Puzzle = Vec<Tile>;
+pub type Puzzle = Vec<usize>;
 
 pub struct State
 {
 	pub puzzle: Puzzle,
-	pub id: u64,
+	pub id: usize,
 	pub pos: usize,
-	pub f: u64,
-	pub g: u64,
-	pub h: u64,
+	pub f: usize,
+	pub g: usize,
+	pub h: usize,
 }

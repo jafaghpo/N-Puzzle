@@ -59,6 +59,12 @@ pub fn run_program(filename: &str, goal_mode: &str, _algo: &str, _heuristic: &st
 		return Err(format!("unsolvable puzzle"));
 	}
 
+	// Swapped 
+	let _goal = goal
+		.iter()
+		.enumerate()
+		.fold(vec![0; size * size], | mut acc, (i, x) | { acc[*x] = i; acc } );
+
 	// DEBUG
 	// println!("size: {}", size);
 	// println!("puzzle: {:?}", puzzle);

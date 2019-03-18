@@ -70,7 +70,8 @@ pub fn check_puzzle(lines: Vec<Vec<&str>>, size: usize) -> Result<Puzzle, String
 
 
 #[cfg(test)]
-mod tests {
+mod tests
+{
     use crate::types::Puzzle;
 
     #[test]

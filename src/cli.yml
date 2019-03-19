@@ -35,6 +35,5 @@ args:
             - manhattan_distance
             - linear_conflict
             - out_of_axes
-            - euclidian_distance
         default_value: manhattan_distance
 

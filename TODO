@@ -6,9 +6,9 @@ Tasks (in order):
 [X] Generate goal state depending on its style (snail, ascending or descending)
 [X] Check if the puzzle is solvable
 [X] Create Unit tests and Integration tests
-[ ] Create a generator of random puzzles available from command line
-[ ] Decide to use either async (if possible) or multithreading
-[ ] Create heuristic functions
+[X] Create a generator of random puzzles available from command line
+[X] Create heuristic functions
+[ ] Decide to use either async with tokio crate (if possible) or multithreading with crossbeam / rayon crate
 [ ] Create open set as a priority queue with F cost as priority
 [ ] Create close set as a hash map (see Optimization section)
 [ ] Create A* algo with its variants (beam, greedy, uniform cost)

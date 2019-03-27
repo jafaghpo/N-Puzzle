@@ -26,10 +26,20 @@ fn main()
 	let goal_mode = matches.value_of("goal_mode").unwrap();
 	let algo = matches.value_of("algorithm").unwrap();
 	let heuristic = matches.value_of("heuristic_function").unwrap();
-
-	match runner::run_program(filename, goal_mode, algo, heuristic)
+	let generator_size = matches.value_of("generator");
+	let difficulty = matches.value_of("difficulty");
+	let iterations = matches.value_of("iterations");
+	println!("iterations: {:?} difficulty: {:?}", iterations, difficulty);
+	if generator_size != Some("none")
 	{
-		Ok(result) => display_result(result),
-		Err(e) => exit_program(&e)
+		println!("yes");
+	}
+	else 
+	{
+		match runner::run_program(filename, goal_mode, algo, heuristic)
+		{
+			Ok(result) => display_result(result),
+			Err(e) => exit_program(&e)
+		}
 	}
 }

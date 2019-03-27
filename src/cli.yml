@@ -36,4 +36,32 @@ args:
             - linear_conflict
             - out_of_axes
         default_value: manhattan_distance
-
+    # puzzle generator args
+    - generator:
+        help: Generate random puzzle of given size
+        long: generator
+        short: G
+        default_value: none
+    - difficulty:
+        conflicts_with:
+            - iterations
+        requires:
+            - generator
+        help: Set level difficulty for generated puzzle
+        short: d
+        long: difficulty
+        possible_values:
+            - easy
+            - normal
+            - hard
+        default_value: normal
+    - iterations:
+        conflicts_with:
+            - difficulty
+        requires:
+            - generator
+        help: Set number of swaps for generated puzzle
+        short: -i
+        long: iterations
+        value_names:
+            - iterations

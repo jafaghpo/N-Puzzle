@@ -1,8 +1,8 @@
-pub type Puzzle = Vec<usize>;
+pub type Map = Vec<usize>;
 
-pub struct State
+pub struct Node
 {
-	pub puzzle: Puzzle,
+	pub map: Map,
 	pub id: usize,
 	pub pos: usize,
 	pub f: usize,

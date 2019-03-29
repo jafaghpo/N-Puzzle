@@ -42,7 +42,6 @@ fn random_swap(mut puzzle: Puzzle, size: usize) -> Puzzle
 	{
 		moves.push(puzzle.empty + size);
 	}
-	//println!("moves : {:?}", moves);
 	let mut rng = thread_rng();
 	puzzle = swap_tiles(puzzle, *moves.choose(&mut rng).unwrap());
 	return puzzle;
@@ -51,7 +50,6 @@ fn random_swap(mut puzzle: Puzzle, size: usize) -> Puzzle
 
 fn swap_tiles(mut puzzle: Puzzle, tile: usize) -> Puzzle
 {
-	//println!("tile :{}, empty: {}", tile, puzzle.empty);
 	let tmp: usize = puzzle.map[puzzle.empty];
 	puzzle.map[puzzle.empty] = puzzle.map[tile];
 	puzzle.map[tile] = tmp;
@@ -85,6 +83,7 @@ pub fn puzzle_to_str(puzzle: Vec<usize>, size: usize) -> String
 	result
 }
 
+// debug function
 pub fn print_puzzle(puzzle: &Vec<usize>, size: usize)
 {
 	for i in 0..(size * size)

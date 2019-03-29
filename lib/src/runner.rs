@@ -1,7 +1,7 @@
 use std::fs;
 use crate::checker;
-use crate::generator;
-use crate::types::Puzzle;
+use crate::goal_generator::{classic, snail, reversed};
+use crate::types::Map;
 
 pub fn run_program(filename: &str, goal_mode: &str, _algo: &str, _heuristic: &str) -> Result<String, String>
 {
@@ -39,7 +39,7 @@ pub fn run_program(filename: &str, goal_mode: &str, _algo: &str, _heuristic: &st
 		.collect();
 	
 	// Check puzzle validity and store the tiles in a vector
-	let mut puzzle: Puzzle;
+	let mut puzzle: Map;
 	match checker::check_puzzle(lines, size)
 	{
 		Ok(p) => puzzle = p,
@@ -47,11 +47,11 @@ pub fn run_program(filename: &str, goal_mode: &str, _algo: &str, _heuristic: &st
 	}
 
 	// Generate goal state depending on style (snail, ascending or descending)
-	let goal: Puzzle = match goal_mode
+	let goal: Map = match goal_mode
 	{
-		"classic" => generator::classic(size),
-		"reversed" => generator::reversed(size),
-		"snail" | _ => generator::snail(size)
+		"classic" => classic(size),
+		"reversed" => reversed(size),
+		"snail" | _ => snail(size)
 	};
 
 	if checker::is_solvable(&puzzle, &goal, size) == false

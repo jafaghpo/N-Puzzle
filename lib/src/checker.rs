@@ -1,7 +1,7 @@
-use crate::types::Puzzle;
+use crate::types::Map;
 
 // Returns the sum of inversions for each tiles except the empty one
-fn get_inversions(puzzle: &Puzzle) -> usize
+fn get_inversions(puzzle: &Map) -> usize
 {
     let mut inversions = 0;
     for i in 0..puzzle.len() - 1
@@ -17,7 +17,7 @@ fn get_inversions(puzzle: &Puzzle) -> usize
 
 // The solvability of a puzzle is explaned here (including inversions):
 // http://www.cs.bham.ac.uk/~mdr/teaching/modules04/java2/TilesSolvability.html
-pub fn is_solvable(initial: &Puzzle, goal: &Puzzle, size: usize) -> bool
+pub fn is_solvable(initial: &Map, goal: &Map, size: usize) -> bool
 {
     let mut initial_inv = get_inversions(initial);
     let mut goal_inv = get_inversions(goal);
@@ -34,7 +34,7 @@ pub fn is_solvable(initial: &Puzzle, goal: &Puzzle, size: usize) -> bool
 }
 
 // Check the puzzle content and returns a vector containing all the tiles
-pub fn check_puzzle(lines: Vec<Vec<&str>>, size: usize) -> Result<Puzzle, String>
+pub fn check_puzzle(lines: Vec<Vec<&str>>, size: usize) -> Result<Map, String>
 {
 	// Check if the number of rows and colums is equal to the puzzle size
 	if lines.len() != size { return Err(format!("invalid number of rows")) }
@@ -72,12 +72,12 @@ pub fn check_puzzle(lines: Vec<Vec<&str>>, size: usize) -> Result<Puzzle, String
 #[cfg(test)]
 mod tests
 {
-    use crate::types::Puzzle;
+    use crate::types::Map;
 
     #[test]
     fn inversions()
 	{
-        let a: Puzzle = vec![4, 3, 2, 1];
+        let a: Map = vec![4, 3, 2, 1];
 
         assert_eq!(super::get_inversions(&a), 6);
     }
@@ -85,7 +85,7 @@ mod tests
     #[test]
     fn inversions_ignore_zero()
 	{
-        let a: Puzzle = vec![3, 2, 1, 0];
+        let a: Map = vec![3, 2, 1, 0];
 
         assert_eq!(super::get_inversions(&a), 3);
     }
@@ -93,7 +93,7 @@ mod tests
     #[test]
     fn inversions_none()
 	{
-        let a: Puzzle = vec![1, 2, 3, 4];
+        let a: Map = vec![1, 2, 3, 4];
 
         assert_eq!(super::get_inversions(&a), 0);
     }
@@ -101,8 +101,8 @@ mod tests
     #[test]
     fn is_solvable_inverted()
 	{
-        let a: Puzzle = vec![1, 2, 3, 4, 5, 6, 7, 8, 0];
-        let b: Puzzle = vec![1, 3, 2, 4, 5, 6, 7, 8, 0];
+        let a: Map = vec![1, 2, 3, 4, 5, 6, 7, 8, 0];
+        let b: Map = vec![1, 3, 2, 4, 5, 6, 7, 8, 0];
 
         assert!(!super::is_solvable(&a, &b, 3));
         assert!(!super::is_solvable(&b, &a, 3));
@@ -111,8 +111,8 @@ mod tests
     #[test]
     fn is_solvable_identity()
 	{
-        let a: Puzzle = vec![1, 2, 3, 4, 5, 6, 7, 8, 0];
-        let b: Puzzle = vec![1, 2, 3, 4, 5, 6, 7, 8, 0];
+        let a: Map = vec![1, 2, 3, 4, 5, 6, 7, 8, 0];
+        let b: Map = vec![1, 2, 3, 4, 5, 6, 7, 8, 0];
 
         assert!(super::is_solvable(&a, &b, 3));
         assert!(super::is_solvable(&b, &a, 3));
@@ -121,8 +121,8 @@ mod tests
     #[test]
     fn is_solvable_4x4()
 	{
-        let a: Puzzle = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0];
-        let b: Puzzle = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 0, 15];
+        let a: Map = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0];
+        let b: Map = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 0, 15];
 
         assert!(super::is_solvable(&a, &b, 3));
         assert!(super::is_solvable(&b, &a, 3));
@@ -131,8 +131,8 @@ mod tests
     #[test]
     fn is_solvable_4x4_identity()
 	{
-        let a: Puzzle = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0];
-        let b: Puzzle = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0];
+        let a: Map = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0];
+        let b: Map = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0];
 
         assert!(super::is_solvable(&a, &b, 3));
         assert!(super::is_solvable(&b, &a, 3));

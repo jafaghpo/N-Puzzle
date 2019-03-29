@@ -1,24 +1,24 @@
-use crate::types::Puzzle;
+use crate::types::Map;
 
 // Generate puzzle in reversed style
-pub fn classic(size: usize) -> Puzzle
+pub fn classic(size: usize) -> Map
 {
-	let mut goal: Puzzle = (1..size * size).collect();
+	let mut goal: Map = (1..size * size).collect();
 	goal.push(0);
 	return goal;
 }
 
 // Generate puzzle in reversed style
-pub fn reversed(size: usize) -> Puzzle
+pub fn reversed(size: usize) -> Map
 {
 	return (0..size * size).rev().collect();
 }
 
 // Generate puzzle in snail style
-pub fn snail(size: usize) -> Puzzle
+pub fn snail(size: usize) -> Map
 {
 	let nb_tiles = size * size;
-	let mut goal: Puzzle = vec![0; nb_tiles];
+	let mut goal: Map = vec![0; nb_tiles];
 	let mut x: i32 = -1;
 	let mut y: i32 = 0;
 	let mut index: usize = 1;

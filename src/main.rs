@@ -7,7 +7,7 @@ use std::process::exit;
 use std::fs::File;
 use std::io::prelude::*;
 use runner;
-use generator::{classic, snail, reversed};
+use goal_generator::{classic, snail, reversed};
 use colored::*;
 use puzzle_generator::{generate_puzzle, get_iterations, puzzle_to_str};
 

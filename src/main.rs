@@ -9,7 +9,7 @@ use std::io::prelude::*;
 use runner;
 use generator::{classic, snail, reversed};
 use colored::*;
-use puzzle_generator::{generate_puzzle, get_iterations, print_puzzle, puzzle_to_str};
+use puzzle_generator::{generate_puzzle, get_iterations, puzzle_to_str};
 
 // Display error message on standard error and exit program
 fn exit_program(message: &str)

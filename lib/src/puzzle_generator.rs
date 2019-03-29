@@ -1,6 +1,7 @@
 extern crate rand;
 
-use rand::Rng;
+use rand::thread_rng;
+use rand::seq::SliceRandom;
 
 pub struct Puzzle
 {
@@ -42,8 +43,8 @@ fn random_swap(mut puzzle: Puzzle, size: usize) -> Puzzle
 		moves.push(puzzle.empty + size);
 	}
 	//println!("moves : {:?}", moves);
-
-	puzzle = swap_tiles(puzzle, *rand::thread_rng().choose(&moves).unwrap());
+	let mut rng = thread_rng();
+	puzzle = swap_tiles(puzzle, *moves.choose(&mut rng).unwrap());
 	return puzzle;
 
 }
@@ -101,7 +102,6 @@ pub fn generate_puzzle(size: usize, iterations: usize, f: fn(usize)->Vec<usize>)
 		empty: 0
 	};
 	puzzle.empty = puzzle.map.iter().position(|&x| x == 0).unwrap();
-	println!("{:?}", puzzle.empty);
 	puzzle = shuffle_puzzle(puzzle, iterations, size);
 	puzzle.map
 }

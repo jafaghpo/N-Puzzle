@@ -62,7 +62,11 @@ fn main()
 				generate_puzzle(size, iter, goal_function)
 			}
 		};
-		let name =  format!("{}/{}_{}_{3}x{3}", filename, goal_mode, difficulty, size.to_string());
+		let name = match iterations
+		{
+			None => format!("{}/{}_{}_{3}x{3}", filename, goal_mode, difficulty, size.to_string()),
+			_ => format!("{}/{}_{}_{3}x{3}", filename, goal_mode, iterations.unwrap().to_string(), size.to_string())
+		};
 		let mut file : File;
 		match File::create(name)
 		{

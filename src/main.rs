@@ -1,13 +1,19 @@
+extern crate colored;
+
 use npuzzle_lib::*;
 
 use clap::{App, load_yaml};
 use std::process::exit;
+use std::fs::File;
+use std::io::prelude::*;
 use runner;
+use colored::*;
+use puzzle_generator::{generate_puzzle, get_iterations, print_puzzle, puzzle_to_str};
 
 // Display error message on standard error and exit program
 fn exit_program(message: &str)
 {
-	eprintln!("error: {}", message);
+	eprintln!("error: {}", message.red());
 	exit(1);
 }
 
@@ -26,13 +32,42 @@ fn main()
 	let goal_mode = matches.value_of("goal_mode").unwrap();
 	let algo = matches.value_of("algorithm").unwrap();
 	let heuristic = matches.value_of("heuristic_function").unwrap();
-	let generator_size = matches.value_of("generator");
-	let difficulty = matches.value_of("difficulty");
+	let generator_size = matches.value_of("generator").unwrap();
+	let difficulty = matches.value_of("difficulty").unwrap();
 	let iterations = matches.value_of("iterations");
-	println!("iterations: {:?} difficulty: {:?}", iterations, difficulty);
-	if generator_size != Some("none")
+	if generator_size != "None"
 	{
-		println!("yes");
+
+		let size: usize = match generator_size.parse()
+		{
+			Ok(n) => n,
+			Err(e) => { exit_program(&e.to_string()); 0 }
+		};
+		let puzzle = match iterations
+		{
+			None => generate_puzzle(size, get_iterations(difficulty)),
+			_ =>
+			{
+				let iter: usize = match iterations.unwrap().parse()
+				{
+					Ok(n) => n,
+					Err(e) => { exit_program(&e.to_string()); 0 }
+				};
+				generate_puzzle(size, iter)
+			}
+		};
+		let name =  format!("{}/puzzle_{}_{}x{}", filename, difficulty, size.to_string(), size.to_string());
+		let mut file : File;
+		match File::create(name)
+		{
+			Ok(n) => file = n,
+			Err(e) => { return exit_program(&e.to_string()) }
+		};
+		match file.write_all(puzzle_to_str(puzzle, size).as_bytes())
+		{
+			Ok(_) => (),
+			Err(e) => exit_program(&e.to_string())
+		};
 	}
 	else 
 	{

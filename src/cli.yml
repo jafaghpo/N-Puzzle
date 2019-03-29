@@ -41,10 +41,8 @@ args:
         help: Generate random puzzle of given size
         long: generator
         short: G
-        default_value: none
+        default_value: None
     - difficulty:
-        conflicts_with:
-            - iterations
         requires:
             - generator
         help: Set level difficulty for generated puzzle
@@ -56,8 +54,6 @@ args:
             - hard
         default_value: normal
     - iterations:
-        conflicts_with:
-            - difficulty
         requires:
             - generator
         help: Set number of swaps for generated puzzle

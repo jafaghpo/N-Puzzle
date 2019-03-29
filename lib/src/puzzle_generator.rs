@@ -1,6 +1,5 @@
 extern crate rand;
 
-use crate::generator::classic;
 use rand::Rng;
 
 pub struct Puzzle
@@ -64,8 +63,8 @@ pub fn get_iterations(difficulty: &str) -> usize
 	let iterations: usize = match difficulty
 	{
 		"easy" => 15,
-		"normal" => 50,
-		"hard" => 140,
+		"normal" => 51,
+		"hard" => 141,
 		_ => 1
 
 	};
@@ -85,7 +84,7 @@ pub fn puzzle_to_str(puzzle: Vec<usize>, size: usize) -> String
 	result
 }
 
-pub fn print_puzzle(puzzle: Vec<usize>, size: usize)
+pub fn print_puzzle(puzzle: &Vec<usize>, size: usize)
 {
 	for i in 0..(size * size)
 	{
@@ -94,13 +93,15 @@ pub fn print_puzzle(puzzle: Vec<usize>, size: usize)
 	}
 }
 
-pub fn generate_puzzle(size: usize, iterations: usize) -> Vec<usize>
+pub fn generate_puzzle(size: usize, iterations: usize, f: fn(usize)->Vec<usize>) -> Vec<usize>
 {
 	let mut puzzle = Puzzle
 	{
-		map: classic(size),
-		empty: size.pow(2) - 1
-	}; 
+		map: f(size),
+		empty: 0
+	};
+	puzzle.empty = puzzle.map.iter().position(|&x| x == 0).unwrap();
+	println!("{:?}", puzzle.empty);
 	puzzle = shuffle_puzzle(puzzle, iterations, size);
 	puzzle.map
 }

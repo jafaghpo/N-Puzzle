@@ -7,6 +7,7 @@ use std::process::exit;
 use std::fs::File;
 use std::io::prelude::*;
 use runner;
+use generator::{classic, snail, reversed};
 use colored::*;
 use puzzle_generator::{generate_puzzle, get_iterations, print_puzzle, puzzle_to_str};
 
@@ -37,7 +38,12 @@ fn main()
 	let iterations = matches.value_of("iterations");
 	if generator_size != "None"
 	{
-
+		let goal_function = match goal_mode 
+		{
+			"classic" => classic,
+			"reversed" => reversed,
+			"snail" | _ => snail
+		};
 		let size: usize = match generator_size.parse()
 		{
 			Ok(n) => n,
@@ -45,7 +51,7 @@ fn main()
 		};
 		let puzzle = match iterations
 		{
-			None => generate_puzzle(size, get_iterations(difficulty)),
+			None => generate_puzzle(size, get_iterations(difficulty), goal_function),
 			_ =>
 			{
 				let iter: usize = match iterations.unwrap().parse()
@@ -53,10 +59,10 @@ fn main()
 					Ok(n) => n,
 					Err(e) => { exit_program(&e.to_string()); 0 }
 				};
-				generate_puzzle(size, iter)
+				generate_puzzle(size, iter, goal_function)
 			}
 		};
-		let name =  format!("{}/puzzle_{}_{}x{}", filename, difficulty, size.to_string(), size.to_string());
+		let name =  format!("{}/{}_{}_{3}x{3}", filename, goal_mode, difficulty, size.to_string());
 		let mut file : File;
 		match File::create(name)
 		{

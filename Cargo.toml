@@ -7,6 +7,7 @@ authors = [
 ]
 edition = "2018"
 
+
 [lib]
 name = "npuzzle_lib"
 path = "lib/src/lib.rs"
@@ -19,39 +20,51 @@ clap = { version = "2.32.0", features = ["yaml"] }
 rand = "0.6.5"
 colored = "1.7"
 
+
 [profile.dev]
-opt-level = 0      # controls the `--opt-level` the compiler builds with.
-                   # 0-1 is good for debugging. 2 is well-optimized. Max is 3.
-                   # 's' attempts to reduce size, 'z' reduces size even more.
+# controls the `--opt-level` the compiler builds with.
+# 0-1 is good for debugging. 2 is well-optimized. Max is 3.
+# 's' attempts to reduce size, 'z' reduces size even more.
+opt-level = 0
 
-debug = true       # (u32 or bool) Include debug information (debug symbols).
-                   # Equivalent to `-C debuginfo=2` compiler flag.
+# (u32 or bool) Include debug information (debug symbols).
+# Equivalent to `-C debuginfo=2` compiler flag.
+debug = true
 
-rpath = false      # controls whether compiler should set loader paths.
-                   # If true, passes `-C rpath` flag to the compiler.
+# controls whether compiler should set loader paths.
+# If true, passes `-C rpath` flag to the compiler.
+rpath = false
 
-lto = false        # Link Time Optimization usually reduces size of binaries
-                   # and static libraries. Increases compilation time.
-                   # If true, passes `-C lto` flag to the compiler, and if a
-                   # string is specified like 'thin' then `-C lto=thin` will
-                   # be passed.
+# Link Time Optimization usually reduces size of binaries
+# and static libraries. Increases compilation time.
+# If true, passes `-C lto` flag to the compiler, and if a
+# string is specified like 'thin' then `-C lto=thin` will
+# be passed.
+lto = false
 
-debug-assertions = true # controls whether debug assertions are enabled
-                   # (e.g. debug_assert!() and arithmetic overflow checks)
+# controls whether debug assertions are enabled
+# (e.g. debug_assert!() and arithmetic overflow checks)
+debug-assertions = true 
 
-codegen-units = 16 # if > 1 enables parallel code generation which improves
-                   # compile times, but prevents some optimizations.
-                   # Passes `-C codegen-units`.
-panic = 'unwind'   # panic strategy (`-C panic=...`), can also be 'abort'
+# if > 1 enables parallel code generation which improves
+# compile times, but prevents some optimizations.
+# Passes `-C codegen-units`.
+codegen-units = 16
 
-incremental = true # whether or not incremental compilation is enabled
+# panic strategy (`-C panic=...`), can also be 'abort'
+panic = 'unwind'
 
-overflow-checks = true # use overflow checks for integer arithmetic.
-                   # Passes the `-C overflow-checks=...` flag to the compiler.
+# whether or not incremental compilation is enabled
+incremental = true
 
+# use overflow checks for integer arithmetic.
+# Passes the `-C overflow-checks=...` flag to the compiler.
+overflow-checks = true 
+
+
+[profile.release]
 # The release profile, used for `cargo build --release` (and the dependencies
 # for `cargo test --release`,  including the local library or binary).
-[profile.release]
 opt-level = 3
 debug = false
 rpath = false
@@ -61,9 +74,10 @@ panic = 'unwind'
 incremental = false
 overflow-checks = false
 
+
+[profile.test]
 # The testing profile, used for `cargo test` (for `cargo test --release` see
 # the `release` and `bench` profiles).
-[profile.test]
 opt-level = 0
 debug = 2
 rpath = false

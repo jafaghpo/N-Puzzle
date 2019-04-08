@@ -4,13 +4,13 @@ author: John Afaghpour <jafaghpo@student.42.com> and Guillaume Gregoire <ggregoi
 about: Implementation of the fifteen-puzzle game with variable puzzle length and configurable algorithms & heuristics
 args:
     - file:
-        help: Path to the file containing the initial state of the puzzle
+        help: Path to file containing the starting state of the puzzle or path to folder where the generated puzzle is created (only with -g flag)
         required: true
         index: 1
-    - goal_mode:
-        help: Style of the goal state
-        short: g
-        long: goal
+    - end_mode:
+        help: Style of the ending state
+        short: e
+        long: end
         possible_values:
             - snail
             - classic
@@ -36,11 +36,12 @@ args:
             - linear_conflict
             - out_of_axes
         default_value: manhattan_distance
+
     # puzzle generator args
     - generator:
         help: Generate random puzzle of given size
         long: generator
-        short: G
+        short: g
         default_value: None
     - difficulty:
         requires:

@@ -3,6 +3,7 @@ use crate::checker;
 use crate::goal_generator::{classic, snail, reversed};
 use crate::types::Map;
 
+// Open an copy the file content into a string
 fn get_file_content(filename: &str) -> Result<String, String>
 {
 	match fs::read_to_string(filename)
@@ -81,9 +82,18 @@ fn file_to_map(file: String) -> Result<(usize, Vec<usize>), String>
 	Ok((size, map))
 }
 
-pub fn run_program(filename: &str, goal_mode: &str, _algo: &str, _heuristic: &str) -> Result<String, String>
+// Swap indexes of a vector with their respective values
+fn swap_indexes(vec: Vec<usize>) -> Vec<usize>
 {
-	// Open an copy the file content into a string
+	vec
+		.iter()
+		.enumerate()
+		.fold(vec![0; vec.len()], | mut acc, (i, x) | { acc[*x] = i; acc } )
+}
+
+pub fn get_map(filename: &str, goal_mode: &str) -> Result<String, String>
+{
+	
     let file = get_file_content(filename)?;
 
 	let (size, map) = file_to_map(file)?;
@@ -102,10 +112,7 @@ pub fn run_program(filename: &str, goal_mode: &str, _algo: &str, _heuristic: &st
 	}
 
 	// Swapped 
-	let _end = end
-		.iter()
-		.enumerate()
-		.fold(vec![0; size * size], | mut acc, (i, x) | { acc[*x] = i; acc } );
+	let _end = swap_indexes(end);
 
 	// DEBUG
 	// println!("size: {}", size);

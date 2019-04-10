@@ -83,16 +83,18 @@ fn file_to_map(file: String) -> Result<(usize, Vec<usize>), String>
 }
 
 // Swap indexes of a vector with their respective values
-fn swap_indexes(vec: Vec<usize>) -> Vec<usize>
-{
-	vec
-		.iter()
-		.enumerate()
-		.fold(vec![0; vec.len()], | mut acc, (i, x) | { acc[*x] = i; acc } )
-}
+
 
 pub fn get_map(filename: &str, goal_mode: &str) -> Result<String, String>
 {
+
+	fn swap_indexes(vec: Vec<usize>) -> Vec<usize>
+	{
+		vec
+			.iter()
+			.enumerate()
+			.fold(vec![0; vec.len()], | mut acc, (i, x) | { acc[*x] = i; acc } )
+	}
 	
     let file = get_file_content(filename)?;
 

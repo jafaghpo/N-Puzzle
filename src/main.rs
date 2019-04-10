@@ -23,25 +23,56 @@ fn display_result(message: String)
 	println!("{}", message);
 }
 
-// fn parse_generator(dirpath: &str, size: &str, level: &str, mode: fn(usize)->Vec<usize>) -> Result<String, String>
-// {
-// 	fn parse_number(number: &str) -> Result<usize, String>
-// 	{
-// 		match number.parse()
-// 		{
-// 			Ok(n) => Ok(n),
-// 			Err(_) => Err(format!("'{}' must be a valid number", number))
-// 		}
-// 	}
+fn create_generated_puzzle(dirpath: &str, size: &str, level: &str, end_mode: &str) -> Result<String, String>
+{
+	fn parse_number(number: &str) -> Result<usize, String>
+	{
+		match number.parse()
+		{
+			Ok(n) => Ok(n),
+			Err(_) => Err(format!("'{}' must be a valid number", number))
+		}
+	}
 
-// 	let size = parse_number(size)?;
+	fn create_file(filepath: &str, puzzle: Vec<usize>, size: usize) -> Result<(), String>
+	{
+		let mut file = match File::create(filepath)
+		{
+			Ok(f) => Ok(f),
+			Err(e) => Err(e.to_string())
+		}?;
 
-// 	let puzzle = match level
-// 	{
-// 		"easy" | "normal" | "hard" => generate_puzzle(size, get_iterations(level), mode),
-// 		_ => generate_puzzle(size, parse_number(level)?, mode)
-// 	};
-// }
+		if let Err(e) = file.write_all(puzzle_to_str(puzzle, size).as_bytes())
+		{
+			return Err(e.to_string())
+		};
+		Ok(())
+	}
+
+	let mode = match end_mode 
+	{
+		"classic" => classic,
+		"reversed" => reversed,
+		"snail" | _ => snail
+	};
+
+	let size = parse_number(size)?;
+
+	let puzzle = match level
+	{
+		"easy" | "normal" | "hard" => generate_puzzle(size, get_iterations(level), mode),
+		_ => generate_puzzle(size, parse_number(level)?, mode)
+	};
+
+	let filepath = match level
+	{
+		"easy" | "normal" | "hard" => format!("{}/{}_{}_{3}x{3}", dirpath, end_mode, level, size),
+		iter => format!("{}/{}_{}_{3}x{3}", dirpath, end_mode, iter, size)
+	};
+
+	create_file(&filepath, puzzle, size)?;
+	Ok(filepath)
+}
 
 fn main()
 {
@@ -92,6 +123,7 @@ fn main()
 			None => format!("{}/{}_{}_{3}x{3}", filename, end_mode, difficulty, size.to_owned()),
 			Some(iter) => format!("{}/{}_{}_{3}x{3}", filename, end_mode, iter.to_owned(), size.to_owned())
 		};
+
 
 		let mut file: File;
 		match File::create(name)

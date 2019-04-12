@@ -22,7 +22,6 @@ args:
         long: algo
         possible_values:
             - a_star
-            - beam
             - greedy
             - uniform_cost
         default_value: a_star

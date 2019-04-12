@@ -1,4 +1,5 @@
 pub type Map = Vec<usize>;
+pub type Heuristic = fn(&Map, &Map, usize) -> Vec<usize>;
 
 pub struct Node
 {
@@ -10,53 +11,58 @@ pub struct Node
 	pub h: usize,
 }
 
-// impl Node
-// {
-// 	fn new(map: Map, _size: usize, gcost: usize) -> Node
-// 	{
-// 		let mut node = Node
-// 		{
-// 			map: map,
-// 			id: String::new(),
-// 			pos: 0,
-// 			f: 0,
-// 			g: gcost,
-// 			h: 0
-// 		};
-// 		node.id = node.get_id();
-// 		node
-// 	}
+impl Node
+{
+	fn new(map: Map, gcost: usize, pos: usize, h_func: Heuristic) -> Node
+	{
+		let mut node = Node
+		{
+			map: map,
+			id: String::new(),
+			pos: 0,
+			f: 0,
+			g: gcost,
+			h: 0
+		};
 
-// 	fn get_id(&self) -> String
-// 	{
-// 		format!("{:?}", self.map)
-// 	}
-// }
+		node.id = node.get_id();
+		node
+	}
+
+	fn get_id(&self) -> String
+	{
+		format!("{:?}", self.map)
+	}
+}
 
 
 
-// pub struct OpenSet
-// {
-//     list: Vec<Node>
-// }
+pub struct OpenSet
+{
+    list: Vec<Node>
+}
 
-// impl OpenSet 
-// {
-// 	pub fn new() -> OpenSet
-// 	{
-// 		OpenSet { list: vec![] }
-// 	}
+impl OpenSet 
+{
+	pub fn new() -> OpenSet
+	{
+		OpenSet { list: vec![] }
+	}
 
-//     pub fn insert(&mut self, to_insert : Node) 
-//     {
-//     	match self.list.iter().position(|node| node.g <= to_insert.g)
-//     	{
-//     		Some(index) => self.list.insert(index, to_insert),
-//     		None => self.list.push(to_insert)
-//     	}
+    pub fn insert(&mut self, to_insert : Node) 
+    {
+    	match self.list.iter().position(|node| node.g <= to_insert.g)
+    	{
+    		Some(index) => self.list.insert(index, to_insert),
+    		None => self.list.push(to_insert)
+    	}
     	
-//     }
-// }
+    }
+}
+
+// node.h = Heuristic(node.map, end, size);
+// let list = node.generate_children();
+// let list = list.
 
 // fn main() 
 // {

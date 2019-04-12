@@ -8,6 +8,31 @@ fn distance(a: usize, b: usize, n: usize) -> usize
 	x + y
 }
 
+pub struct Heuristic
+{
+	goal: Map,
+	size: usize,
+	func: fn(&Map, &Map, usize) -> usize
+}
+
+impl Heuristic
+{
+	pub fn new(goal: Map, size: usize, func: fn(&Map, &Map, usize) -> usize) -> Heuristic
+	{
+		Heuristic
+		{
+			goal: goal,
+			size: size,
+			func: func
+		}
+	}
+
+	pub fn call(&self, current: &Map) -> usize
+	{
+		(self.func)(current, &self.goal, self.size)
+	}
+}
+
 // Returns the sum of distance between the start position and the end position of each tiles
 // The empty tile is ignored if we want the heuristic to be admissible
 pub fn manhattan(start: &Map, end: &Map, size: usize) -> usize
@@ -216,5 +241,16 @@ mod tests
         let end: Map = vec![15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
 
         assert_eq!(super::linear_conflict(&start, &end, 4), 46);
+	}
+
+	#[test]
+	fn test_heuristic()
+	{
+		let start: Map = vec![4, 1, 15, 2, 6, 8, 5, 7, 12, 9, 3, 10, 14, 13, 11, 0];
+        let end: Map = vec![15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
+        let size = 4;
+
+		let heuristic = super::Heuristic::new(end, size, super::linear_conflict);
+		assert_eq!(heuristic.call(&start), 46);
 	}
 }

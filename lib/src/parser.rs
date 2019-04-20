@@ -1,7 +1,7 @@
 use std::fs;
 use crate::checker;
 use crate::goal_generator::{classic, snail, reversed};
-use crate::types::Map;
+use crate::types::{Map, Parsed};
 
 // Open an copy the file content into a string
 fn get_file_content(filename: &str) -> Result<String, String>
@@ -83,22 +83,19 @@ fn file_to_map(file: String) -> Result<(usize, Vec<usize>), String>
 }
 
 // Swap indexes of a vector with their respective values
-
-
-pub fn get_map(filename: &str, goal_mode: &str) -> Result<String, String>
+pub fn swap_indexes(vec: Vec<usize>) -> Vec<usize>
 {
+	vec
+		.iter()
+		.enumerate()
+		.fold(vec![0; vec.len()], | mut acc, (i, x) | { acc[*x] = i; acc } )
+}
 
-	fn swap_indexes(vec: Vec<usize>) -> Vec<usize>
-	{
-		vec
-			.iter()
-			.enumerate()
-			.fold(vec![0; vec.len()], | mut acc, (i, x) | { acc[*x] = i; acc } )
-	}
-	
+pub fn get_map(filename: &str, goal_mode: &str) -> Result<Parsed, String>
+{
     let file = get_file_content(filename)?;
 
-	let (size, map) = file_to_map(file)?;
+	let (size, start) = file_to_map(file)?;
 
 	// Generate end node depending on style (snail, ascending or descending)
 	let end: Map = match goal_mode
@@ -108,22 +105,10 @@ pub fn get_map(filename: &str, goal_mode: &str) -> Result<String, String>
 		"snail" | _ => snail(size)
 	};
 
-	if checker::is_solvable(&map, &end, size) == false
+	if checker::is_solvable(&start, &end, size) == false
 	{
 		return Err(format!("unsolvable puzzle"));
 	}
 
-	// Swapped 
-	let _end = swap_indexes(end);
-
-	// DEBUG
-	// println!("size: {}", size);
-	// println!("puzzle: {:?}", puzzle);
-	// for n in 0..(size * size)
-	// {
-	// 	if n % size == 0 { println!("") }
-	// 	print!("{}\t", goal[n]);
-	// }
-	// println!("");
-	Ok(format!("End of run_program"))
+	Ok(Parsed { start: start, end: swap_indexes(end), size: size })
 }

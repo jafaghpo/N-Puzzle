@@ -1,14 +1,17 @@
 extern crate colored;
 
-use npuzzle_lib::*;
-
 use clap::{App, load_yaml};
 use std::process::exit;
 use std::fs::File;
 use std::io::prelude::*;
-use parser;
-use goal_generator::{classic, snail, reversed};
 use colored::*;
+
+use npuzzle_lib::*;
+use types::{Heuristic, Parsed, Solution};
+use heuristic;
+use parser;
+use algorithm;
+use goal_generator::{classic, snail, reversed};
 use puzzle_generator::{generate_puzzle, get_iterations, puzzle_to_str};
 
 // Display error message on standard error and exit program
@@ -16,11 +19,6 @@ fn exit_program(message: &str)
 {
 	eprintln!("error: {}", message.red());
 	exit(1);
-}
-
-fn display_result(message: String)
-{
-	println!("{}", message);
 }
 
 fn create_generated_puzzle(dirpath: &str, size: &str, level: &str, end_mode: &str) -> Result<String, String>
@@ -74,6 +72,14 @@ fn create_generated_puzzle(dirpath: &str, size: &str, level: &str, end_mode: &st
 	Ok(filepath)
 }
 
+// fn print_solution(mut solution: Solution)
+// {
+// 	while let Some(node) = solution.path.pop()
+// 	{
+
+// 	}
+// }
+
 fn main()
 {
 	// Read syntax from cli.yml (Command Line Interpretor)
@@ -82,65 +88,46 @@ fn main()
 	let matches = App::from_yaml(yaml).get_matches();
 	let filename = matches.value_of("file").unwrap();
 	let end_mode = matches.value_of("end_mode").unwrap();
-	let algo = matches.value_of("algorithm").unwrap();
-	let heuristic = matches.value_of("heuristic_function").unwrap();
 	let generator_size = matches.value_of("generator").unwrap();
-	let difficulty = matches.value_of("difficulty").unwrap();
+	let level = matches.value_of("difficulty").unwrap();
 	let iterations = matches.value_of("iterations");
-
-	let mode = match end_mode 
+	let heuristic = match matches.value_of("heuristic_function").unwrap()
 	{
-		"classic" => classic,
-		"reversed" => reversed,
-		"snail" | _ => snail
+		"misplaced_tiles" => heuristic::misplaced_tiles,
+		"out_of_axes" => heuristic::out_of_axes,
+		"linear_conflict" => heuristic::linear_conflict,
+		"manhattan" | _ => heuristic::manhattan
 	};
 
-	if generator_size != "None"
+	let cost_func: Box<Fn(usize, usize) -> usize> = match matches.value_of("algorithm").unwrap()
 	{
+		"uniform_cost"	=> Box::new(| _h, g | g),
+		"greedy"		=> Box::new(| h, _g | h),
+		"a_start" | _	=> Box::new(| h, g | h + g)
+	};
 
-		let size: usize;
-		match generator_size.parse()
+	let file = if generator_size == "None" { filename.to_owned() } else
+	{
+		let result = match iterations
 		{
-			Ok(n) => size = n,
-			Err(_) => { return exit_program(&format!("'{}' must be a valid number", generator_size)) }
+			Some(iter) => create_generated_puzzle(filename, generator_size, iter, end_mode),
+			None => create_generated_puzzle(filename, generator_size, level, end_mode),
 		};
-
-		let puzzle = match iterations
+		match result
 		{
-			None => generate_puzzle(size, get_iterations(difficulty), mode),
-			Some(iter) =>
-			{
-				match iter.parse()
-				{
-					Ok(n) => generate_puzzle(size, n, mode),
-					Err(_) => { return exit_program(&format!("'{}' must be a valid number", iter)) }
-				}
-			}
-		};
+			Ok(res) => res,
+			Err(e) => { exit_program(&e); String::new() }
+		}
+	};
 
-		let name = match iterations
-		{
-			None => format!("{}/{}_{}_{3}x{3}", filename, end_mode, difficulty, size.to_owned()),
-			Some(iter) => format!("{}/{}_{}_{3}x{3}", filename, end_mode, iter.to_owned(), size.to_owned())
-		};
-
-
-		let mut file: File;
-		match File::create(name)
-		{
-			Ok(n) => file = n,
-			Err(e) => { return exit_program(&e.to_string()) }
-		};
-
-		if let Err(e) = file.write_all(puzzle_to_str(puzzle, size).as_bytes())
-		{
-			exit_program(&e.to_string());
-		};
-	}
-
-	// match parser::get_map(filename, end_mode)
-	// {
-	// 	Ok(result) => display_result(result),
-	// 	Err(e) => exit_program(&e)
-	// };
+	// Get start map, end map & map size inside parsed
+	let parsed: Result<Parsed, String> = parser::get_map(&file, end_mode);
+	if let Err(e) = &parsed { exit_program(&e) }
+	let puzzle = parsed.unwrap();
+	let start = puzzle.start;
+	let end = puzzle.end;
+	let size = puzzle.size;
+	let heuristic = Heuristic::new(end, size, heuristic);
+	let solution = algorithm::solve(start, &heuristic, &cost_func);
+	println!("moves: {}, selected: {}, total: {}", solution.moves, solution.selected_nodes, solution.total_nodes);
 }

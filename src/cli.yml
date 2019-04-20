@@ -31,10 +31,10 @@ args:
         long: heuristic
         possible_values:
             - misplaced_tiles
-            - manhattan_distance
+            - manhattan
             - linear_conflict
             - out_of_axes
-        default_value: manhattan_distance
+        default_value: manhattan
 
     # puzzle generator args
     - generator:

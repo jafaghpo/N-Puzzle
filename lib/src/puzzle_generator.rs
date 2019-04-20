@@ -9,7 +9,7 @@ pub struct Puzzle
 	empty: usize
 }
 
-fn shuffle_puzzle (mut puzzle: Puzzle, interations: usize, size: usize) -> Puzzle
+fn shuffle_puzzle(mut puzzle: Puzzle, interations: usize, size: usize) -> Puzzle
 {
 	for _ in 0..interations
 	{

@@ -5,9 +5,10 @@ use std::process::exit;
 use std::fs::File;
 use std::io::prelude::*;
 use colored::*;
+use std::time::{Instant, SystemTime};
 
 use npuzzle_lib::*;
-use types::{Heuristic, Parsed, Solution};
+use types::{Map, Heuristic, Parsed};
 use heuristic;
 use parser;
 use algorithm;
@@ -72,16 +73,20 @@ fn create_generated_puzzle(dirpath: &str, size: &str, level: &str, end_mode: &st
 	Ok(filepath)
 }
 
-// fn print_solution(mut solution: Solution)
-// {
-// 	while let Some(node) = solution.path.pop()
-// 	{
-
-// 	}
-// }
+fn print_puzzle(puzzle: &Map, size: usize)
+{
+	for i in 0..(size * size)
+	{
+		if i % size == 0 { println!("") }
+		print!("{}\t", puzzle[i]);
+	}
+	println!("");
+}
 
 fn main()
 {
+
+	let start_time = Instant::now();
 	// Read syntax from cli.yml (Command Line Interpretor)
 	// parse the command line arguments and return the matches
 	let yaml = load_yaml!("cli.yml");
@@ -123,11 +128,17 @@ fn main()
 	// Get start map, end map & map size inside parsed
 	let parsed: Result<Parsed, String> = parser::get_map(&file, end_mode);
 	if let Err(e) = &parsed { exit_program(&e) }
-	let puzzle = parsed.unwrap();
-	let start = puzzle.start;
-	let end = puzzle.end;
-	let size = puzzle.size;
+	let (start, end, size) = parsed.unwrap();
 	let heuristic = Heuristic::new(end, size, heuristic);
+
+	println!("Starting map:");
+	print_puzzle(&start, size);
 	let solution = algorithm::solve(start, &heuristic, &cost_func);
-	println!("moves: {}, selected: {}, total: {}", solution.moves, solution.selected_nodes, solution.total_nodes);
+	println!("Number of moves: {}", solution.moves);
+	println!("Number of selected states in open set: {}", solution.selected_nodes);
+	println!("Number of states ever represented in memory: {}", solution.total_nodes);
+	println!("Execution time: {:?}", start_time.elapsed());
+	// for node in &solution.path { println!("{}", node); }
+	println!("path: {:?}", &solution.path);
+	println!("path len: {}", solution.path.len());
 }

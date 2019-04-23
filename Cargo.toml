@@ -16,6 +16,7 @@ harness = true
 
 
 [dependencies]
+rayon = "1.0"
 clap = { version = "2.32.0", features = ["yaml"] }
 rand = "0.6.5"
 colored = "1.7"
@@ -84,6 +85,5 @@ rpath = false
 lto = false
 debug-assertions = true
 codegen-units = 16
-panic = 'unwind'
 incremental = true
 overflow-checks = true

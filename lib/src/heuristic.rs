@@ -1,6 +1,8 @@
 use crate::types::Map;
-use std::collections::HashMap;
+use std::collections::HashSet;
+use rayon::prelude::*;
 
+#[inline]
 fn distance(a: usize, b: usize, n: usize) -> usize
 {
 	let x = (((a / n) as isize) - ((b / n) as isize)).abs() as usize;
@@ -10,6 +12,7 @@ fn distance(a: usize, b: usize, n: usize) -> usize
 
 // Returns the sum of distance between the start position and the end position of each tiles
 // The empty tile is ignored if we want the heuristic to be admissible
+#[inline]
 pub fn manhattan(start: &Map, end: &Map, size: usize) -> usize
 {
 	start
@@ -18,7 +21,9 @@ pub fn manhattan(start: &Map, end: &Map, size: usize) -> usize
 		.fold(0, | acc, (i, x) | acc + if *x != 0 { distance(i, end[*x], size) } else { 0 })
 }
 
+
 // Returns the number of misplaced tiles in the puzzle expect the empty tile
+#[inline]
 pub fn misplaced_tiles(start: &Map, end: &Map, _size: usize) -> usize
 {
 	start
@@ -27,7 +32,9 @@ pub fn misplaced_tiles(start: &Map, end: &Map, _size: usize) -> usize
 		.fold(0, | acc, (i, x) | acc + if *x != 0 && i != end[*x] { 1 } else { 0 })
 }
 
+
 // Returns the number of tiles misplaced from their axes
+#[inline]
 pub fn out_of_axes(start: &Map, end: &Map, size: usize) -> usize
 {
 	start.iter().enumerate().fold(0, | acc, (i, x) |
@@ -44,58 +51,73 @@ pub fn out_of_axes(start: &Map, end: &Map, size: usize) -> usize
 	})
 }
 
+
 // Linear conflict explained here:
 // https://algorithmsinsight.wordpress.com/graph-theory-2/a-star-in-general/implementing-a-star-to-solve-n-puzzle/
+#[inline]
+fn conflict(start: usize, cur: usize, end: usize, size: usize, inc: i8) -> bool
+{
+	match (inc.abs() == 1, inc > 0)
+	{
+		(true, true) => (start / size == cur / size) && (cur <= end),
+		(false, true) => (start % size == cur % size) && (cur <= end),
+		(true, false) => (start / size == cur / size) && (cur >= end),
+		(false, false) => (start % size == cur % size) && (cur >= end)
+	}
+}
+
+#[inline]
+fn conflict_pair(a: usize, b: usize) -> (usize, usize)
+{
+	if a < b { (a, b) } else { (b, a) }
+}
+
+#[inline]
+fn count_conflicts(start_pos: usize, inc: usize, size: usize, start: &Map, end: &Map) -> Option<Vec<(usize, usize)>>
+{
+	let mut conflicts: Vec<(usize, usize)> = vec![];
+	let mut pos = start_pos;
+	let end_pos = end[start[start_pos]];
+	let inc = (inc as i8) * if start_pos < end_pos { 1 } else { -1 };
+
+	while pos != end_pos
+	{
+		pos = ((pos as i8) + inc) as usize;
+		if start[pos] == 0 { continue };
+		let pos_ = end[start[pos]];
+		if conflict(start_pos, pos_, end_pos, size, inc)
+		{
+			let pair = conflict_pair(start[start_pos], start[pos]);
+			conflicts.push(pair);
+		}
+	}
+	if conflicts.len() == 0 { None } else { Some(conflicts) }
+}
+
+#[inline]
 pub fn linear_conflict(start: &Map, end: &Map, size: usize) -> usize
 {
-	let mut records: HashMap<String, bool> = HashMap::new();
-
-	let pair_to_key = | a: usize, b: usize | if a < b { format!("{},{}", a, b) } else { format!("{},{}", b, a) };
-
-	// count the number of conflicts for a single tile
-	let mut count_conflicts = | pos: usize, axis: usize | -> usize
-	{
-		let mut count = 0;
-		let mut start_pos = pos as isize;
-		let end_pos = end[start[pos]] as isize;
-		let inc = if start_pos < end_pos { axis as isize } else { -(axis as isize) };
-
-		let same_axis = | x: usize | if axis == 1 { pos / size == x / size } else { pos % size == x % size };
-		let in_the_way = | x: usize | if inc > 0 { x <= end_pos as usize } else { x >= end_pos as usize };
-		while start_pos != end_pos
-		{
-			start_pos += inc;
-			if start[start_pos as usize] == 0 { continue };
-			let end_pos = end[start[start_pos as usize]];
-			count += match end_pos
-			{
-				x if same_axis(x) && in_the_way(x) =>
-				{
-					let key = pair_to_key(start[pos], start[start_pos as usize]);
-					let result = if records.contains_key(&key) { 0 } else { 1 };
-					records.insert(key, true);
-					result
-				},
-				_ => 0
-			}
-		}
-		count
-	};
-
 	// Get the sum of conflicts for each tile
-	let conflicts = start.iter().enumerate().fold(0, | acc, (i, x) |
+	let raw_list: Vec<Option<Vec<(usize, usize)>>> = start.par_iter().enumerate().map(| (i, x) |
 	{
-		if *x == 0 { return acc }
+		if *x == 0 { return None }
 		let same_row = i / size == end[*x] / size;
 		let same_column = i % size == end[*x] % size;
-		acc + match (same_row, same_column)
+		let pair_list = match (same_row, same_column)
 		{
-			(false, false) | (true, true) => 0,
-			(false, true) => count_conflicts(i, size),
-			(true, false) => count_conflicts(i, 1),
-		}
-	});
-	manhattan(start, end, size) + 2 * conflicts
+			(false, false) | (true, true) => None,
+			(false, true) => count_conflicts(i, size, size, start, end),
+			(true, false) => count_conflicts(i, 1, size, start, end),
+		};
+		pair_list
+	}).collect();
+
+	let mut conflicts: HashSet<(usize, usize)> = HashSet::new();
+	for pair_list in raw_list
+	{
+		if let Some(pair) = pair_list { for elem in pair { conflicts.insert(elem); } }
+	}
+	manhattan(start, end, size) + 2 * conflicts.len()
 }
 
 #[cfg(test)]

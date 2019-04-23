@@ -1,22 +1,37 @@
 use std::collections::HashMap;
+use std::cmp::Ordering;
 
 pub type Map = Vec<usize>;
 
-pub struct Parsed
-{
-	pub start: Map,
-	pub end: Map,
-	pub size: usize
-}
+pub type Parsed = (Map, Map, usize);
 
 pub type CostFunc = Box<Fn(usize, usize) -> usize>;
 
-pub struct Cost
-{
-	pub f: usize,
-	pub g: usize,
-	pub h: usize
-}
+// pub struct Position
+// {
+// 	x: usize,
+// 	y: usize
+// }
+
+// pub enum Move
+// {
+// 	Up,
+// 	Down,
+// 	Left,
+// 	Right,
+// 	No
+// }
+
+// impl Move
+// {
+// 	pub is_possible(&self, pos: Position, size: usize) -> bool
+// 	{
+// 		match self
+// 		{
+
+// 		}
+// 	}
+// }
 
 pub struct Heuristic
 {
@@ -37,19 +52,23 @@ impl Heuristic
 		}
 	}
 
+	#[inline]
 	pub fn call(&self, current: &Map) -> usize
 	{
 		(self.func)(current, &self.end, self.size)
 	}
 }
 
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Node
 {
 	pub map: Map,
 	pub id: String,
 	pub parent_id: String,
 	pub pos: usize,
-	pub cost: Cost
+	pub h: usize,
+	pub g: usize,
+	pub f: usize
 }
 
 impl Node
@@ -63,7 +82,9 @@ impl Node
 			id: String::new(),
 			parent_id: String::new(),
 			pos: 0,
-			cost: Cost {f: 0, g: 0, h: <usize>::max_value() }
+			f: 0,
+			g: 0,
+			h: <usize>::max_value()
 		}
 	}
 
@@ -75,6 +96,7 @@ impl Node
 		node
 	}
 
+	#[inline]
 	pub fn swap_position(&self, new_pos: usize) -> Map
 	{
 		let mut map = self.map.clone();
@@ -104,9 +126,9 @@ impl Node
 			{
 				node.parent_id = self.id.clone();
 				node.pos = self.pos - size;
-				node.cost.g = self.cost.g + 1;
-				node.cost.h = heuristic.call(&node.map);
-				node.cost.f = get_cost(node.cost.h, node.cost.g);
+				node.g = self.g + 1;
+				node.h = heuristic.call(&node.map);
+				node.f = get_cost(node.h, node.g);
 				children.push(node);
 			}
 		}
@@ -122,9 +144,9 @@ impl Node
 			{
 				node.parent_id = self.id.clone();
 				node.pos = self.pos + size;
-				node.cost.g = self.cost.g + 1;
-				node.cost.h = heuristic.call(&node.map);
-				node.cost.f = get_cost(node.cost.h, node.cost.g);
+				node.g = self.g + 1;
+				node.h = heuristic.call(&node.map);
+				node.f = get_cost(node.h, node.g);
 				children.push(node);
 			}
 		}
@@ -140,9 +162,9 @@ impl Node
 			{
 				node.parent_id = self.id.clone();
 				node.pos = self.pos - 1;
-				node.cost.g = self.cost.g + 1;
-				node.cost.h = heuristic.call(&node.map);
-				node.cost.f = get_cost(node.cost.h, node.cost.g);
+				node.g = self.g + 1;
+				node.h = heuristic.call(&node.map);
+				node.f = get_cost(node.h, node.g);
 				children.push(node);
 			}
 		}
@@ -160,9 +182,9 @@ impl Node
 			{
 				node.parent_id = self.id.clone();
 				node.pos = self.pos + 1;
-				node.cost.g = self.cost.g + 1;
-				node.cost.h = heuristic.call(&node.map);
-				node.cost.f = get_cost(node.cost.h, node.cost.g);
+				node.g = self.g + 1;
+				node.h = heuristic.call(&node.map);
+				node.f = get_cost(node.h, node.g);
 				children.push(node);
 			}
 		}
@@ -170,44 +192,28 @@ impl Node
 	}
 }
 
-pub type ClosedSet = HashMap<String, String>;
-
-pub struct OpenSet
+impl PartialOrd for Node
 {
-    pub list: Vec<Node>
-}
-
-impl OpenSet 
-{
-	pub fn new(start_node: Node) -> OpenSet
+    fn partial_cmp(&self, other: &Node) -> Option<Ordering>
 	{
-		OpenSet { list: vec![start_node] }
-	}
-
-    pub fn insert(&mut self, to_insert: Node)
-    {
-    	match self.list.iter().position(|node| node.cost.f <= to_insert.cost.f)
-    	{
-    		Some(index) => self.list.insert(index, to_insert),
-    		None => self.list.push(to_insert)
-    	}
+        Some(self.cmp(other))
     }
-
-	pub fn insert_list(&mut self, list: Vec<Node>)
-	{
-		for node in list { self.insert(node) }
-	}
-
-	pub fn pop_lowest(&mut self) -> Node
-	{
-		self.list.pop().unwrap()
-	}
 }
+
+impl Ord for Node
+{
+    fn cmp(&self, other: &Node) -> Ordering
+	{
+        other.f.cmp(&self.f)
+    }
+}
+
+pub type ClosedSet = HashMap<String, String>;
 
 pub struct Solution
 {
-	pub moves: usize,
 	pub path: Vec<String>,
+	pub moves: usize,
 	pub selected_nodes: usize,
 	pub total_nodes: usize,
 }

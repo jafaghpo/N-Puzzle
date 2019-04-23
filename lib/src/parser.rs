@@ -110,5 +110,10 @@ pub fn get_map(filename: &str, goal_mode: &str) -> Result<Parsed, String>
 		return Err(format!("unsolvable puzzle"));
 	}
 
-	Ok(Parsed { start: start, end: swap_indexes(end), size: size })
+	if start == end
+	{
+		return Err(format!("The puzzle given is already the solution..."));
+	}
+
+	Ok((start, swap_indexes(end), size))
 }

@@ -1,15 +1,15 @@
 use crate::types::Map;
 
 // Returns the sum of inversions for each tiles except the empty one
-fn get_inversions(puzzle: &Map) -> usize
+fn get_inversions(map: &Map) -> usize
 {
     let mut inversions = 0;
-    for i in 0..puzzle.len() - 1
+    for i in 0..map.len() - 1
 	{
-        for j in i + 1..puzzle.len()
+        for j in i + 1..map.len()
 		{
-            if puzzle[i] == 0 || puzzle[j] == 0 { continue }
-            if puzzle[i] > puzzle[j] { inversions += 1 }
+            if map[i] == 0 || map[j] == 0 { continue }
+            if map[i] > map[j] { inversions += 1 }
         }
     }
     return inversions;
@@ -17,20 +17,20 @@ fn get_inversions(puzzle: &Map) -> usize
 
 // The solvability of a puzzle is explaned here (including inversions):
 // http://www.cs.bham.ac.uk/~mdr/teaching/modules04/java2/TilesSolvability.html
-pub fn is_solvable(initial: &Map, goal: &Map, size: usize) -> bool
+pub fn is_solvable(start: &Map, end: &Map, size: usize) -> bool
 {
-    let mut initial_inv = get_inversions(initial);
-    let mut goal_inv = get_inversions(goal);
+    let mut start_inv = get_inversions(start);
+    let mut end_inv = get_inversions(end);
 
 	// If the size is even, we take into account the position of the empty tile
     if size % 2 == 0
 	{
-        initial_inv += initial.iter().position(|x| *x == 0).unwrap() / size;
-        goal_inv += goal.iter().position(|x| *x == 0).unwrap() / size;
+        start_inv += start.iter().position(|x| *x == 0).unwrap() / size;
+        end_inv += end.iter().position(|x| *x == 0).unwrap() / size;
     }
 	// The "total" polarity (depending on the polarity of the size)
 	// of a solvable puzzle MUST be the same as that of its final state
-    return initial_inv % 2 == goal_inv % 2;
+    return start_inv % 2 == end_inv % 2;
 }
 
 

@@ -1,13 +1,23 @@
 use std::collections::{HashMap, BinaryHeap};
 use crate::types::{Map, Node, Heuristic, CostFunc, ClosedSet, Solution};
+use indicatif::{ ProgressBar, ProgressStyle };
+
 
 pub fn solve(start: Map, heuristic: &Heuristic, get_cost: &CostFunc) -> Solution
 {
+
 	let start_node = Node::create_start(start);
 	let mut open_set: BinaryHeap<Node> = BinaryHeap::new();
+	start_node.h = heuristic.call(start_node.map);
 	open_set.push(start_node);
 
 	let mut closed_set = ClosedSet::new();
+
+	let bar = ProgressBar::new(start_node.h);
+	bar.set_style(ProgressStyle::default_bar()
+    .template("[{bar:100.cyan}] {eta_precise:.magenta} | Open set: {pos:.green} Closed set: {msg:.red}")
+    .progress_chars(" ✈ "));
+    let mut best_h = <usize>::max_value();
 
 	let end_node = loop
 	{
@@ -25,7 +35,15 @@ pub fn solve(start: Map, heuristic: &Heuristic, get_cost: &CostFunc) -> Solution
 
 		// Add all possible nodes in the open set
 		for node in children { open_set.push(node); }
+
+		bar.set_position(open_set.len() as u64);
+		bar.set_message(&format!("{}", closed_set.len()));
+
+		current_node.h
+		bar.inc(1);
 	};
+
+	bar.finish_and_clear();
 
 	// Get solution path
 	let mut path = vec![ end_node.id.clone() ];

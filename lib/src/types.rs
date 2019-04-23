@@ -7,31 +7,30 @@ pub type Parsed = (Map, Map, usize);
 
 pub type CostFunc = Box<Fn(usize, usize) -> usize>;
 
-// pub struct Position
-// {
-// 	x: usize,
-// 	y: usize
-// }
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct Position
+{
+	x: usize,
+	y: usize
+}
 
-// pub enum Move
-// {
-// 	Up,
-// 	Down,
-// 	Left,
-// 	Right,
-// 	No
-// }
+impl Position
+{
+	pub fn as_index(&self) -> usize
+	{
+		
+	}
+}
 
-// impl Move
-// {
-// 	pub is_possible(&self, pos: Position, size: usize) -> bool
-// 	{
-// 		match self
-// 		{
-
-// 		}
-// 	}
-// }
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub enum Move
+{
+	Up,
+	Down,
+	Left,
+	Right,
+	No
+}
 
 pub struct Heuristic
 {
@@ -63,9 +62,8 @@ impl Heuristic
 pub struct Node
 {
 	pub map: Map,
-	pub id: String,
-	pub parent_id: String,
-	pub pos: usize,
+	pub pos: Position,
+	pub action: Move,
 	pub h: usize,
 	pub g: usize,
 	pub f: usize
@@ -73,38 +71,57 @@ pub struct Node
 
 impl Node
 {
-
 	pub fn new(map: Map) -> Node
 	{
 		Self
 		{
 			map: map,
-			id: String::new(),
-			parent_id: String::new(),
-			pos: 0,
+			pos: Position { x: 0, y: 0 },
+			action: Move::No,
 			f: 0,
 			g: 0,
-			h: <usize>::max_value()
+			h: 0
 		}
 	}
 
-	pub fn create_start(map: Map) -> Node
+	pub fn create_start(map: Map, size: usize, heuristic: &Heuristic) -> Node
 	{
 		let mut node = Node::new(map);
-		node.id = format!("{:?}", node.map);
-		node.pos = node.map.iter().position(|&x| x == 0).unwrap();
+		let index = node.map.iter().position(|&x| x == 0).unwrap();
+		node.pos.x = index % size;
+		node.pos.y = index / size;
+		node.h = heuristic.call(&map);
+		node.f = node.h;
 		node
 	}
 
 	#[inline]
-	pub fn swap_position(&self, new_pos: usize) -> Map
+	pub fn do_move(&self, size: usize, movement: Move) -> Map
 	{
 		let mut map = self.map.clone();
+		let offset: i8 = match Move
+		{
+			Up => (-size) as i8,
+			Down => size as i8,
+			Left => -1,
+			Right => 1
+		};
+		let new_pos = pos
 		let tmp = map[new_pos];
 
 		map[new_pos] = map[self.pos];
 		map[self.pos] = tmp;
 		map
+	}
+
+	pub fn generate_moves(&self, size: usize) -> Vec<Self>
+	{
+		let maps: Vec<Map> = vec![];
+		match self.pos
+		{
+			Position { y: 0, .. } => 
+		}
+
 	}
 
 	pub fn generate_children(&self, closed_set: &ClosedSet, heuristic: &Heuristic, get_cost: &CostFunc) -> Vec<Self>

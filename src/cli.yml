@@ -61,3 +61,8 @@ args:
         long: iterations
         value_names:
             - iterations
+    - verbosity:
+        help: Display more informations on the solution
+        short: -v
+        long: verbosity
+

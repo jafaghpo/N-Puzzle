@@ -1,15 +1,15 @@
 use std::collections::{HashMap, BinaryHeap};
 use crate::types::{Map, Node, Heuristic, CostFunc, Position, Move, State, Solution};
-use indicatif::{ ProgressBar, ProgressStyle };
+//use indicatif::{ ProgressBar, ProgressStyle };
 
-fn create_progress_bar(size: usize) -> ProgressBar
-{
-	let bar = ProgressBar::new(size as u64);
-	bar.set_style(ProgressStyle::default_bar()
-		.template("[{bar:100.cyan}] {eta_precise:.magenta} | Open set: {pos:.green} Closed set: {msg:.red}")
-		.progress_chars(" ✈ "));
-	bar
-}
+// fn create_progress_bar(size: usize) -> ProgressBar
+// {
+// 	let bar = ProgressBar::new(size as u64);
+// 	bar.set_style(ProgressStyle::default_bar()
+// 		.template("[{bar:100.cyan}] {eta_precise:.magenta} | Open set: {pos:.green} Closed set: {msg:.red}")
+// 		.progress_chars(" ✈ "));
+// 	bar
+// }
 
 pub fn solve(start: Map, size: usize, heuristic: &Heuristic, get_cost: &CostFunc) -> Solution
 {
@@ -23,11 +23,13 @@ pub fn solve(start: Map, size: usize, heuristic: &Heuristic, get_cost: &CostFunc
 	let mut open_set: BinaryHeap<Node> = BinaryHeap::new();
 	let mut closed_set: HashMap<Map, Move> = HashMap::new();
 	let start_node = Node::create_start(start, size, heuristic);
-	let max_h = start_node.h;
+	let mut best_h = start_node.h;
 	open_set.push(start_node);
 
-	let bar = create_progress_bar(max_h);
-    let mut best_h = max_h;
+	// let bar = ProgressBar::new(best_h as u64);
+	// bar.set_style(ProgressStyle::default_bar()
+	// 	.template("[{bar:100.cyan}] {eta_precise:.magenta} | Open set: {pos:.green} Closed set: {msg:.red}")
+	// 	.progress_chars(" i "));
 
 	let (last_map, last_move, mut last_pos) = loop
 	{
@@ -38,11 +40,12 @@ pub fn solve(start: Map, size: usize, heuristic: &Heuristic, get_cost: &CostFunc
 		closed_set.insert(current_node.map.clone(), current_node.movement.clone());
 
 		// Update progress bar
-		bar.set_position(open_set.len() as u64);
-		bar.set_message(&format!("{}", closed_set.len()));
+		// bar.set_position(open_set.len() as u64);
+		// bar.set_message(&format!("{}", closed_set.len()));
 		if current_node.h < best_h
 		{
-			bar.inc((best_h - current_node.h) as u64);
+			println!("inc: {:?}, current: {:?}", (best_h - current_node.h) as u64, current_node.h);
+			//bar.inc((best_h - current_node.h) as u64);
 			best_h = current_node.h
 		}
 
@@ -60,7 +63,7 @@ pub fn solve(start: Map, size: usize, heuristic: &Heuristic, get_cost: &CostFunc
 		}
 	};
 
-	bar.finish_and_clear();
+	//bar.finish_and_clear();
 
 	let mut solution = Solution::new();
 	solution.selected_nodes = closed_set.len();

@@ -1,4 +1,5 @@
 use std::collections::{HashMap, BinaryHeap};
+use std::{thread, time};
 use crate::types::{Map, Node, Heuristic, CostFunc, Position, Move, State, Solution};
 //use indicatif::{ ProgressBar, ProgressStyle };
 
@@ -20,17 +21,20 @@ pub fn solve(start: Map, size: usize, heuristic: &Heuristic, get_cost: &CostFunc
 		Box::new(|pos, size| if pos.y > 0 { Move::Up(-(size as i64)) } else { Move::No }),
 		Box::new(|pos, size| if pos.y < size - 1 { Move::Down(size as i64) } else { Move::No })
 	];
+	let ten_millis = time::Duration::from_millis(10);
 	let mut open_set: BinaryHeap<Node> = BinaryHeap::new();
 	let mut closed_set: HashMap<Map, Move> = HashMap::new();
 	let start_node = Node::create_start(start, size, heuristic);
 	let mut best_h = start_node.h;
+	let max: f32 = start_node.h as f32;
+	let mut i: f32 = 0.0;
 	open_set.push(start_node);
 
 	// let bar = ProgressBar::new(best_h as u64);
 	// bar.set_style(ProgressStyle::default_bar()
 	// 	.template("[{bar:100.cyan}] {eta_precise:.magenta} | Open set: {pos:.green} Closed set: {msg:.red}")
 	// 	.progress_chars(" i "));
-
+	let mut percent: f32 = 0.0;
 	let (last_map, last_move, mut last_pos) = loop
 	{
 		// Get the node with the lowest f cost
@@ -44,7 +48,10 @@ pub fn solve(start: Map, size: usize, heuristic: &Heuristic, get_cost: &CostFunc
 		// bar.set_message(&format!("{}", closed_set.len()));
 		if current_node.h < best_h
 		{
-			println!("inc: {:?}, current: {:?}", (best_h - current_node.h) as u64, current_node.h);
+			i += (best_h - current_node.h) as f32;
+			percent = i / max * 100.0;
+			println!("progress: {:} of {:}, percent = {:.2}%", i, max, percent);
+			thread::sleep(ten_millis);
 			//bar.inc((best_h - current_node.h) as u64);
 			best_h = current_node.h
 		}

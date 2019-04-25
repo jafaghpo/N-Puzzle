@@ -1,64 +1,83 @@
 use std::collections::{HashMap, BinaryHeap};
-use crate::types::{Map, Node, Heuristic, CostFunc, ClosedSet, Solution};
+use crate::types::{Map, Node, Heuristic, CostFunc, Position, Move, State, Solution};
 use indicatif::{ ProgressBar, ProgressStyle };
 
-
-pub fn solve(start: Map, heuristic: &Heuristic, get_cost: &CostFunc) -> Solution
+fn create_progress_bar(size: usize) -> ProgressBar
 {
+	let bar = ProgressBar::new(size as u64);
+	bar.set_style(ProgressStyle::default_bar()
+		.template("[{bar:100.cyan}] {eta_precise:.magenta} | Open set: {pos:.green} Closed set: {msg:.red}")
+		.progress_chars(" ✈ "));
+	bar
+}
 
-	let start_node = Node::create_start(start);
+pub fn solve(start: Map, size: usize, heuristic: &Heuristic, get_cost: &CostFunc) -> Solution
+{
+	let possible_moves: [Box<Fn(&Position, usize) -> Move>; 4] =
+	[
+		Box::new(|pos, _size| if pos.x > 0 { Move::Left(-1) } else { Move::No }),
+		Box::new(|pos, size| if pos.x < size - 1 { Move::Right(1) } else { Move::No }),
+		Box::new(|pos, size| if pos.y > 0 { Move::Up(-(size as i64)) } else { Move::No }),
+		Box::new(|pos, size| if pos.y < size - 1 { Move::Down(size as i64) } else { Move::No })
+	];
 	let mut open_set: BinaryHeap<Node> = BinaryHeap::new();
-	start_node.h = heuristic.call(start_node.map);
+	let mut closed_set: HashMap<Map, Move> = HashMap::new();
+	let start_node = Node::create_start(start, size, heuristic);
+	let max_h = start_node.h;
 	open_set.push(start_node);
 
-	let mut closed_set = ClosedSet::new();
+	let bar = create_progress_bar(max_h);
+    let mut best_h = max_h;
 
-	let bar = ProgressBar::new(start_node.h);
-	bar.set_style(ProgressStyle::default_bar()
-    .template("[{bar:100.cyan}] {eta_precise:.magenta} | Open set: {pos:.green} Closed set: {msg:.red}")
-    .progress_chars(" ✈ "));
-    let mut best_h = <usize>::max_value();
-
-	let end_node = loop
+	let (last_map, last_move, mut last_pos) = loop
 	{
 		// Get the node with the lowest f cost
 		let current_node = open_set.pop().unwrap();
-
+	
 		// Add the current node to the closed set
-		closed_set.insert(current_node.id.clone(), current_node.parent_id.clone());
+		closed_set.insert(current_node.map.clone(), current_node.movement.clone());
 
-		// If the end node is found
-		if current_node.h == 0 { break current_node }
-
-		// Get the list of possible moves with their costs already generated
-		let children = current_node.generate_children(&closed_set, heuristic, get_cost);
-
-		// Add all possible nodes in the open set
-		for node in children { open_set.push(node); }
-
+		// Update progress bar
 		bar.set_position(open_set.len() as u64);
 		bar.set_message(&format!("{}", closed_set.len()));
+		if current_node.h < best_h
+		{
+			bar.inc((best_h - current_node.h) as u64);
+			best_h = current_node.h
+		}
 
-		current_node.h
-		bar.inc(1);
+		// If the end node is found
+		if current_node.h == 0 { break (current_node.map, current_node.movement, current_node.pos) }
+
+		// Get the list of possible moves
+		let moves: Vec<Node> = current_node.generate_moves(size, &possible_moves);
+		for mut node in moves
+		{
+			if closed_set.contains_key(&node.map) { continue }
+			node.h = heuristic.call(&node.map);
+			node.f = get_cost(node.h, node.g);
+			open_set.push(node);
+		}
 	};
 
 	bar.finish_and_clear();
 
+	let mut solution = Solution::new();
+	solution.selected_nodes = closed_set.len();
+	solution.total_nodes = open_set.len() + closed_set.len();
+
 	// Get solution path
-	let mut path = vec![ end_node.id.clone() ];
-	let mut id = &end_node.id;
-	while let Some(x) = closed_set.get(id)
+	solution.path = vec![State { map: last_map, movement: last_move }];
+	loop
 	{
-		path.push(x.to_string());
-		id = &x;
+		let last = solution.path.last().unwrap();
+		if last.movement == Move::No { break }
+		let map = last.movement.opposite().do_move(&last.map, &last_pos, size);
+		let movement = closed_set.remove(&map).unwrap();
+		last_pos = last_pos.update(&last.movement.opposite());
+		solution.path.push(State {map: map, movement: movement });
 	}
-	
-	Solution
-	{
-		moves: path.len(),
-		path: path,
-		selected_nodes: closed_set.len(),
-		total_nodes: open_set.len() + closed_set.len(),
-	}
+
+	solution.moves = solution.path.len();
+	solution
 }

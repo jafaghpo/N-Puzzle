@@ -1,17 +1,31 @@
 NAME = npuzzle
 
 red="\033[31m"
+green="\033[32m"
 blue="\033[34m"
 reset="\033[0m"
 
-all: cargo $(NAME)
+all: $(NAME)
 
-cargo:
+build_release:
 	@cargo build --release
 
-$(NAME):
-	@echo $(blue)"Linking..."$(reset)
+$(NAME): build_release
+	@echo $(red)"Deleting existing link to executable..."$(reset)
+	@rm npuzzle
+	@echo $(blue)"Linking release executable..."$(reset)
 	@ln -s target/release/npuzzle
+	@echo $(green)"Linking done"$(reset)
+
+build_debug:
+	@cargo build
+
+debug: build_debug
+	@echo $(red)"Deleting existing link to executable..."$(reset)
+	@rm npuzzle
+	@echo $(blue)"Linking debug executable..."$(reset)
+	@ln -s target/debug/npuzzle
+	@echo $(green)"Linking done"$(reset)
 
 clean: 
 	@rm -rf npuzzle

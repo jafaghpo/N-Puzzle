@@ -17,6 +17,7 @@ harness = true
 
 [dependencies]
 rayon = "1.0"
+indicatif = "0.11.0"
 clap = { version = "2.32.0", features = ["yaml"] }
 rand = "0.6.5"
 colored = "1.7"

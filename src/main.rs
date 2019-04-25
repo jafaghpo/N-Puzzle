@@ -5,10 +5,10 @@ use std::process::exit;
 use std::fs::File;
 use std::io::prelude::*;
 use colored::*;
-use std::time::{Instant, SystemTime};
+use std::time::{Instant};
 
 use npuzzle_lib::*;
-use types::{Map, Heuristic, Parsed};
+use types::{Map,Heuristic, Parsed, Move, Solution, State};
 use heuristic;
 use parser;
 use algorithm;
@@ -73,14 +73,39 @@ fn create_generated_puzzle(dirpath: &str, size: &str, level: &str, end_mode: &st
 	Ok(filepath)
 }
 
-fn print_puzzle(puzzle: &Map, size: usize)
+fn display_map(map: &Map, size: usize)
 {
 	for i in 0..(size * size)
 	{
-		if i % size == 0 { println!("") }
-		print!("{}\t", puzzle[i]);
+		if i != 0 && i % size == 0 { println!("\n") }
+		print!(" {}\t", map[i]);
 	}
-	println!("");
+	println!("\n\n------------------------------------\n");
+}
+
+fn display_path(mut path: Vec<State>, size: usize)
+{
+	while let Some(state) = path.pop()
+	{
+		match state.movement
+		{
+			Move::Left(_) => println!("[Left]"),
+			Move::Right(_) => println!("[Right]"),
+			Move::Up(_) => println!("[Up]"),
+			Move::Down(_) => println!("[Down]"),
+			Move::No => println!("[Start State]"),
+		};
+		display_map(&state.map, size);
+	}
+}
+
+fn display_solution(solution: Solution, size: usize, time: Instant, verbosity: bool)
+{
+	if verbosity { display_path(solution.path, size) }
+	println!("Number of moves: {}", solution.moves);
+	println!("Number of selected states in open set: {}", solution.selected_nodes);
+	println!("Number of states ever represented in memory: {}", solution.total_nodes);
+	println!("Execution time: {:?}", time.elapsed());
 }
 
 fn main()
@@ -95,6 +120,7 @@ fn main()
 	let end_mode = matches.value_of("end_mode").unwrap();
 	let generator_size = matches.value_of("generator").unwrap();
 	let level = matches.value_of("difficulty").unwrap();
+	let verbosity = matches.is_present("verbosity");
 	let iterations = matches.value_of("iterations");
 	let heuristic = match matches.value_of("heuristic_function").unwrap()
 	{
@@ -130,15 +156,6 @@ fn main()
 	if let Err(e) = &parsed { exit_program(&e) }
 	let (start, end, size) = parsed.unwrap();
 	let heuristic = Heuristic::new(end, size, heuristic);
-
-	println!("Starting map:");
-	print_puzzle(&start, size);
-	let solution = algorithm::solve(start, &heuristic, &cost_func);
-	println!("Number of moves: {}", solution.moves);
-	println!("Number of selected states in open set: {}", solution.selected_nodes);
-	println!("Number of states ever represented in memory: {}", solution.total_nodes);
-	println!("Execution time: {:?}", start_time.elapsed());
-	// for node in &solution.path { println!("{}", node); }
-	println!("path: {:?}", &solution.path);
-	println!("path len: {}", solution.path.len());
+	let solution = algorithm::solve(start, size, &heuristic, &cost_func);
+	display_solution(solution, size, start_time, verbosity);
 }

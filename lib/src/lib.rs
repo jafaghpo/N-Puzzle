@@ -8,3 +8,4 @@ pub mod goal_generator;
 pub mod puzzle_generator;
 
 extern crate rayon;
+extern crate indicatif;

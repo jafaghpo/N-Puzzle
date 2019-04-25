@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::cmp::Ordering;
 
 pub type Map = Vec<usize>;
@@ -10,26 +9,84 @@ pub type CostFunc = Box<Fn(usize, usize) -> usize>;
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Position
 {
-	x: usize,
-	y: usize
+	pub x: usize,
+	pub y: usize
 }
 
 impl Position
 {
-	pub fn as_index(&self) -> usize
+	pub fn as_index(&self, size: usize) -> usize
 	{
-		
+		self.y * size + self.x
+	}
+
+	pub fn update(&self, movement: &Move) -> Position
+	{
+		match movement
+		{
+			Move::Left(x) | Move::Right(x) => Position
+			{
+				x: (self.x as i64 + x) as usize,
+				y: self.y
+			},
+			Move::Up(_) => Position
+			{
+				x: self.x,
+				y: (self.y as i64 - 1) as usize
+			},
+			Move::Down(_) => Position
+			{
+				x: self.x,
+				y: (self.y as i64 + 1) as usize
+			},
+			Move::No => Position {x: self.x, y: self.y }
+		}
 	}
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Move
 {
-	Up,
-	Down,
-	Left,
-	Right,
+	Up(i64),
+	Down(i64),
+	Left(i64),
+	Right(i64),
 	No
+}
+
+impl Move
+{
+	pub fn do_move(&self, map: &Map, pos: &Position, size: usize) -> Map
+	{
+		let mut map = map.clone();
+		let pos = pos.as_index(size);
+		let new_pos = (pos as i64 + self.get_offset()) as usize;
+		let tmp = map[new_pos];
+		map[new_pos] = map[pos];
+		map[pos] = tmp;
+		map
+	}
+
+	pub fn get_offset(&self) -> i64
+	{
+		match self
+		{
+			Move::Up(x) | Move::Down(x) | Move::Left(x) | Move::Right(x) => *x,
+			Move::No => 0
+		}
+	}
+
+	pub fn opposite(&self) -> Self
+	{
+		match self
+		{
+			Move::Left(x) => Move::Right(-x),
+			Move::Right(x) => Move::Left(-x),
+			Move::Up(x) => Move::Down(-x),
+			Move::Down(x) => Move::Up(-x),
+			Move::No => Move::No
+		}
+	}
 }
 
 pub struct Heuristic
@@ -41,9 +98,9 @@ pub struct Heuristic
 
 impl Heuristic
 {
-	pub fn new(end: Map, size: usize, func: fn(&Map, &Map, usize) -> usize) -> Heuristic
+	pub fn new(end: Map, size: usize, func: fn(&Map, &Map, usize) -> usize) -> Self
 	{
-		Heuristic
+		Self
 		{
 			end: end,
 			size: size,
@@ -51,7 +108,6 @@ impl Heuristic
 		}
 	}
 
-	#[inline]
 	pub fn call(&self, current: &Map) -> usize
 	{
 		(self.func)(current, &self.end, self.size)
@@ -63,7 +119,7 @@ pub struct Node
 {
 	pub map: Map,
 	pub pos: Position,
-	pub action: Move,
+	pub movement: Move,
 	pub h: usize,
 	pub g: usize,
 	pub f: usize
@@ -71,141 +127,45 @@ pub struct Node
 
 impl Node
 {
-	pub fn new(map: Map) -> Node
+	pub fn new(map: Map) -> Self
 	{
 		Self
 		{
 			map: map,
 			pos: Position { x: 0, y: 0 },
-			action: Move::No,
+			movement: Move::No,
 			f: 0,
 			g: 0,
 			h: 0
 		}
 	}
 
-	pub fn create_start(map: Map, size: usize, heuristic: &Heuristic) -> Node
+	pub fn create_start(map: Map, size: usize, heuristic: &Heuristic) -> Self
 	{
 		let mut node = Node::new(map);
 		let index = node.map.iter().position(|&x| x == 0).unwrap();
 		node.pos.x = index % size;
 		node.pos.y = index / size;
-		node.h = heuristic.call(&map);
+		node.h = heuristic.call(&node.map);
 		node.f = node.h;
 		node
 	}
 
-	#[inline]
-	pub fn do_move(&self, size: usize, movement: Move) -> Map
+	pub fn generate_moves(&self, size: usize, possible_moves: &[Box<Fn(&Position, usize) -> Move>; 4]) -> Vec<Self>
 	{
-		let mut map = self.map.clone();
-		let offset: i8 = match Move
+		let mut moves: Vec<Node> = vec![];
+		for func in possible_moves
 		{
-			Up => (-size) as i8,
-			Down => size as i8,
-			Left => -1,
-			Right => 1
-		};
-		let new_pos = pos
-		let tmp = map[new_pos];
-
-		map[new_pos] = map[self.pos];
-		map[self.pos] = tmp;
-		map
-	}
-
-	pub fn generate_moves(&self, size: usize) -> Vec<Self>
-	{
-		let maps: Vec<Map> = vec![];
-		match self.pos
-		{
-			Position { y: 0, .. } => 
+			let movement = func(&self.pos, size);
+			if movement == Move::No { continue }
+			let map = movement.do_move(&self.map, &self.pos, size);
+			let mut node = Node::new(map);
+			node.pos = self.pos.update(&movement);
+			node.movement = movement;
+			node.g = self.g + 1;
+			moves.push(node);
 		}
-
-	}
-
-	pub fn generate_children(&self, closed_set: &ClosedSet, heuristic: &Heuristic, get_cost: &CostFunc) -> Vec<Self>
-	{
-		let size = heuristic.size;
-		let mut children: Vec<Self> = vec![];
-		// println!("size: {}, pos: {}", size, self.pos);
-
-		// Check up move
-		if 0 <= (self.pos as i64) - (size as i64)
-		{
-			// println!("before swap");
-			let new_map = self.swap_position(self.pos - size);
-			// println!("after swap");
-			let mut node = Self::new(new_map);
-			node.id = format!("{:?}", node.map);
-			
-			if !closed_set.contains_key(&node.id)
-			{
-				node.parent_id = self.id.clone();
-				node.pos = self.pos - size;
-				node.g = self.g + 1;
-				node.h = heuristic.call(&node.map);
-				node.f = get_cost(node.h, node.g);
-				children.push(node);
-			}
-		}
-		
-		// Check down move
-		if self.map.len() > self.pos + size
-		{
-			let new_map = self.swap_position(self.pos + size);
-			let mut node = Self::new(new_map);
-			node.id = format!("{:?}", node.map);
-			
-			if !closed_set.contains_key(&node.id)
-			{
-				node.parent_id = self.id.clone();
-				node.pos = self.pos + size;
-				node.g = self.g + 1;
-				node.h = heuristic.call(&node.map);
-				node.f = get_cost(node.h, node.g);
-				children.push(node);
-			}
-		}
-
-		// Check left move
-		if self.pos % size != 0
-		{
-			let new_map = self.swap_position(self.pos - 1);
-			let mut node = Self::new(new_map);
-			node.id = format!("{:?}", node.map);
-			
-			if !closed_set.contains_key(&node.id)
-			{
-				node.parent_id = self.id.clone();
-				node.pos = self.pos - 1;
-				node.g = self.g + 1;
-				node.h = heuristic.call(&node.map);
-				node.f = get_cost(node.h, node.g);
-				children.push(node);
-			}
-		}
-
-		// Check right move
-		if ((self.pos % size) as i64) != (size as i64) - 1
-		{
-			// println!("before swap");
-			let new_map = self.swap_position(self.pos + 1);
-			// println!("after swap");
-			let mut node = Self::new(new_map);
-			node.id = format!("{:?}", node.map);
-			
-			if !closed_set.contains_key(&node.id)
-			{
-				node.parent_id = self.id.clone();
-				node.pos = self.pos + 1;
-				node.g = self.g + 1;
-				node.h = heuristic.call(&node.map);
-				node.f = get_cost(node.h, node.g);
-				children.push(node);
-			}
-		}
-		children
+		moves
 	}
 }
 
@@ -225,12 +185,30 @@ impl Ord for Node
     }
 }
 
-pub type ClosedSet = HashMap<String, String>;
+pub struct State
+{
+	pub map: Map,
+	pub movement: Move
+}
 
 pub struct Solution
 {
-	pub path: Vec<String>,
+	pub path: Vec<State>,
 	pub moves: usize,
 	pub selected_nodes: usize,
 	pub total_nodes: usize,
+}
+
+impl Solution
+{
+	pub fn new() -> Self
+	{
+		Self
+		{
+			path: vec![],
+			moves: 0,
+			selected_nodes: 0,
+			total_nodes: 0
+		}
+	}
 }

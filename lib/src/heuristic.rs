@@ -1,6 +1,6 @@
 use crate::types::Map;
 use std::collections::HashSet;
-use rayon::prelude::*;
+// use rayon::prelude::*;
 
 #[inline]
 fn distance(a: usize, b: usize, n: usize) -> usize
@@ -98,7 +98,7 @@ fn count_conflicts(start_pos: usize, inc: usize, size: usize, start: &Map, end: 
 pub fn linear_conflict(start: &Map, end: &Map, size: usize) -> usize
 {
 	// Get the sum of conflicts for each tile
-	let raw_list: Vec<Option<Vec<(usize, usize)>>> = start.par_iter().enumerate().map(| (i, x) |
+	let raw_list: Vec<Option<Vec<(usize, usize)>>> = start.iter().enumerate().map(| (i, x) |
 	{
 		if *x == 0 { return None }
 		let same_row = i / size == end[*x] / size;

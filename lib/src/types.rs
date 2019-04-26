@@ -56,7 +56,8 @@ impl Position
 			Move::Left(_) => Position { x: self.x + 1, y: self.y },
 			Move::Right(_) => Position { x: self.x - 1, y: self.y },
 			Move::Up(_) => Position { x: self.x, y: self.y + 1 },
-			Move::Down(_) => Position { x: self.x, y: self.y - 1 }
+			Move::Down(_) => Position { x: self.x, y: self.y - 1 },
+			Move::No => Position { x: self.x, y: self.y }
 		}
 	}
 }
@@ -111,7 +112,8 @@ pub struct Solver
 	pub name: String,
 	pub goal: Map,
 	pub size: usize,
-	pub cost_func: fn(&Map, &Map, usize) -> usize,
+	pub first_cost: fn(Node, &Map, usize) -> Node,
+	pub update_cost: fn(Node, &Map, usize) -> Node,
 	pub uniform: bool,
 	pub greedy: bool
 }
@@ -120,19 +122,38 @@ impl Solver
 {
 	pub fn new(goal: Map, size: usize, name: &str, algo: &str) -> Self
 	{
-		let heuristic = match name
+		let first_cost: fn(Node, &Map, usize) -> Node;
+		let update_cost: fn(Node, &Map, usize) -> Node;
+		match name
 		{
-			"misplaced_tiles" => heuristic::misplaced_tiles,
-			"out_of_axes" => heuristic::out_of_axes,
-			"linear_conflict" => heuristic::linear_conflict,
-			"manhattan" | _ => heuristic::manhattan
+			"misplaced_tiles" => 
+			{
+				first_cost = heuristic::misplaced_tiles;
+				update_cost = heuristic::partial_misplaced;
+			}
+			"out_of_axes" =>
+			{
+				first_cost = heuristic::out_of_axes;
+				update_cost = heuristic::partial_out_of_axes;
+			}
+			"linear_conflict" =>
+			{
+				first_cost = heuristic::linear_conflict;
+				update_cost = heuristic::linear_conflict;
+			}
+			"manhattan" | _ =>
+			{
+				first_cost = heuristic::manhattan;
+				update_cost = heuristic::partial_manhattan;
+			}
 		};
 
 		Self
 		{
 			goal: goal,
 			size: size,
-			cost_func: heuristic,
+			first_cost: first_cost,
+			update_cost: update_cost,
 			name: name.to_owned(),
 			uniform: algo == "uniform",
 			greedy: algo == "greedy"
@@ -146,13 +167,20 @@ impl Solver
 			node.f = node.g;
 			return node;
 		}
-		node.cost = (self.cost_func)(&node.map, &self.goal, self.size);
+		node = (self.first_cost)(node, &self.goal, self.size);
 		node.f = if self.greedy { node.h } else { node.h + node.g };
 		node
 	}
 
 	pub fn update_cost(&self, mut node: Node) -> Node
 	{
+		if self.uniform
+		{
+			node.f = node.g;
+			return node;
+		}
+		node = (self.update_cost)(node, &self.goal, self.size);
+		node.f = if self.greedy { node.h } else { node.h + node.g };
 		node
 	}
 }
@@ -201,6 +229,7 @@ impl Node
 			if movement == Move::No { continue }
 			let map = movement.do_move(&self.map, &self.pos, size);
 			let mut node = Node::new(map);
+			node.cost = self.cost.clone();
 			node.pos = self.pos.update(&movement);
 			node.movement = movement;
 			node.g = self.g + 1;

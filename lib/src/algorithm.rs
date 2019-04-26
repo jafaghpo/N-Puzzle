@@ -1,9 +1,8 @@
 use std::collections::HashMap;
 use min_max_heap::MinMaxHeap;
 use crate::types::{Flag, Map, Node, Solver, Position, Move, State, Solution};
-use crate::heuristic::manhattan;
 
-fn get_capacity(h_value: usize, mem_limit: bool, name: &str) -> usize
+fn get_capacity(h_value: usize, mem_limit: bool, name: &str, greedy: bool) -> usize
 {
 	let mut power = if h_value < 9
 	{
@@ -16,10 +15,11 @@ fn get_capacity(h_value: usize, mem_limit: bool, name: &str) -> usize
 	power = match name
 	{
 		"linear_conflict" => power,
-		"manhattan" => power + 1,
 		"out_of_axes" => power + 2,
-		"misplaced_tiles" => power + 3
+		"misplaced_tiles" => power + 3,
+		"manhattan" | _ => power + 1
 	};
+	if greedy { power -= 2 }
 	let capacity = 2usize.pow(power);
 	if mem_limit { println!("Open set limited to 2^{} nodes ({} nodes)", power, capacity) }
 	capacity
@@ -39,7 +39,7 @@ pub fn solve(start: Map, size: usize, solver: &Solver, flag: &Flag) -> Solution
 	start.find_position(size);
 	start = solver.get_cost(start);
 
-	let capacity = get_capacity(start.h, flag.mem_limit, &solver.name);
+	let capacity = get_capacity(start.h, flag.mem_limit, &solver.name, solver.greedy);
 	let mut open_set: MinMaxHeap<Node> = MinMaxHeap::with_capacity(capacity);
 	let mut closed_set: HashMap<Map, Move> = HashMap::with_capacity(capacity);
 
@@ -62,7 +62,6 @@ pub fn solve(start: Map, size: usize, solver: &Solver, flag: &Flag) -> Solution
 		// Add the current node to the closed set
 		closed_set.insert(current.map.clone(), current.movement.clone());
 
-
 		if flag.display_bar && current.h < best_h
 		{
 			i += (best_h - current.h) as f32;
@@ -80,7 +79,7 @@ pub fn solve(start: Map, size: usize, solver: &Solver, flag: &Flag) -> Solution
 		for mut node in moves
 		{
 			if closed_set.contains_key(&node.map) { continue }
-			node = solver.get_cost(node);
+			node = solver.update_cost(node);
 
 			// Get rid of the lastest priority node if the size is reaching max capacity
 			if flag.mem_limit && open_set.len() == capacity

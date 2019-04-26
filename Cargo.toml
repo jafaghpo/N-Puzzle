@@ -16,11 +16,10 @@ harness = true
 
 
 [dependencies]
-rayon = "1.0"
-indicatif = "0.11.0"
 clap = { version = "2.32.0", features = ["yaml"] }
 rand = "0.6.5"
 colored = "1.7"
+min-max-heap = "1.2.2"
 
 
 [profile.dev]
@@ -61,7 +60,7 @@ incremental = true
 
 # use overflow checks for integer arithmetic.
 # Passes the `-C overflow-checks=...` flag to the compiler.
-overflow-checks = true 
+overflow-checks = true
 
 
 [profile.release]

@@ -1,18 +1,25 @@
-use std::collections::{HashMap, BinaryHeap};
-use std::{thread, time};
-use crate::types::{Map, Node, Heuristic, CostFunc, Position, Move, State, Solution};
-//use indicatif::{ ProgressBar, ProgressStyle };
+use std::collections::HashMap;
+use min_max_heap::MinMaxHeap;
+use crate::types::{Flag, Map, Node, Solver, Position, Move, State, Solution};
+use crate::heuristic::manhattan;
 
-// fn create_progress_bar(size: usize) -> ProgressBar
-// {
-// 	let bar = ProgressBar::new(size as u64);
-// 	bar.set_style(ProgressStyle::default_bar()
-// 		.template("[{bar:100.cyan}] {eta_precise:.magenta} | Open set: {pos:.green} Closed set: {msg:.red}")
-// 		.progress_chars(" ✈ "));
-// 	bar
-// }
+fn get_capacity(h_value: usize, mem_limit: bool) -> usize
+{
+	let power = if h_value < 9
+	{
+		1 + h_value as u32
+	}
+	else
+	{
+		11 + 2 * (h_value / 5 - 3) as u32
+	};
+	let power = if power > 25 { 25 } else { power };
+	let capacity = 2usize.pow(power);
+	if mem_limit { println!("Open set limited to 2^{} nodes ({} nodes)", power, capacity) }
+	capacity
+}
 
-pub fn solve(start: Map, size: usize, heuristic: &Heuristic, get_cost: &CostFunc) -> Solution
+pub fn solve(start: Map, size: usize, solver: &Solver, flag: &Flag) -> Solution
 {
 	let possible_moves: [Box<Fn(&Position, usize) -> Move>; 4] =
 	[
@@ -21,60 +28,67 @@ pub fn solve(start: Map, size: usize, heuristic: &Heuristic, get_cost: &CostFunc
 		Box::new(|pos, size| if pos.y > 0 { Move::Up(-(size as i64)) } else { Move::No }),
 		Box::new(|pos, size| if pos.y < size - 1 { Move::Down(size as i64) } else { Move::No })
 	];
-	let ten_millis = time::Duration::from_millis(10);
-	let mut open_set: BinaryHeap<Node> = BinaryHeap::new();
-	let mut closed_set: HashMap<Map, Move> = HashMap::new();
-	let start_node = Node::create_start(start, size, heuristic);
-	let mut best_h = start_node.h;
-	let max: f32 = start_node.h as f32;
-	let mut i: f32 = 0.0;
-	open_set.push(start_node);
 
-	// let bar = ProgressBar::new(best_h as u64);
-	// bar.set_style(ProgressStyle::default_bar()
-	// 	.template("[{bar:100.cyan}] {eta_precise:.magenta} | Open set: {pos:.green} Closed set: {msg:.red}")
-	// 	.progress_chars(" i "));
-	let mut percent: f32 = 0.0;
+	let mut start = Node::new(start);
+	start.find_position(size);
+	start = solver.get_cost(start);
+
+	let h_val = if solver.name == "manhattan" { start.h } else { manhattan(&start.map, &solver.goal, size) };
+	let capacity = get_capacity(h_val, flag.mem_limit);
+	let mut open_set: MinMaxHeap<Node> = MinMaxHeap::with_capacity(capacity);
+	let mut closed_set: HashMap<Map, Move> = HashMap::with_capacity(capacity);
+
+	let mut best_h = start.h;
+	let max_h: f32 = start.h as f32;
+	let mut i: f32 = 0.0;
+	let mut _percent: f32 = 0.0;
+
+	open_set.push(start);
+
 	let (last_map, last_move, mut last_pos) = loop
 	{
 		// Get the node with the lowest f cost
-		let current_node = open_set.pop().unwrap();
+		let current = open_set.pop_max().unwrap();
 	
 		// Add the current node to the closed set
-		closed_set.insert(current_node.map.clone(), current_node.movement.clone());
+		closed_set.insert(current.map.clone(), current.movement.clone());
 
-		// Update progress bar
-		// bar.set_position(open_set.len() as u64);
-		// bar.set_message(&format!("{}", closed_set.len()));
-		if current_node.h < best_h
+
+		if flag.display_bar && current.h < best_h
 		{
-			i += (best_h - current_node.h) as f32;
-			percent = i / max * 100.0;
-			println!("progress: {:} of {:}, percent = {:.2}%", i, max, percent);
-			thread::sleep(ten_millis);
-			//bar.inc((best_h - current_node.h) as u64);
-			best_h = current_node.h
+			i += (best_h - current.h) as f32;
+			_percent = i / max_h * 100.0;
+			println!("progress: {:} of {:}, capacity: {} open set: {}, closed set {}, percent = {:.2}%",
+				i, max_h, open_set.capacity(), open_set.len(), closed_set.len(), _percent);
+			best_h = current.h
 		}
 
 		// If the end node is found
-		if current_node.h == 0 { break (current_node.map, current_node.movement, current_node.pos) }
+		if current.h == 0 { break (current.map, current.movement, current.pos) }
 
 		// Get the list of possible moves
-		let moves: Vec<Node> = current_node.generate_moves(size, &possible_moves);
+		let moves: Vec<Node> = current.generate_moves(size, &possible_moves);
 		for mut node in moves
 		{
 			if closed_set.contains_key(&node.map) { continue }
-			node.h = heuristic.call(&node.map);
-			node.f = get_cost(node.h, node.g);
-			open_set.push(node);
+			node = solver.get_cost(node);
+
+			// Get rid of the lastest priority node if the size is reaching max capacity
+			if flag.mem_limit && open_set.len() == capacity
+			{
+				open_set.push_pop_min(node);
+			}
+			else
+			{
+				open_set.push(node);
+			}
 		}
 	};
 
-	//bar.finish_and_clear();
-
 	let mut solution = Solution::new();
-	solution.selected_nodes = closed_set.len();
-	solution.total_nodes = open_set.len() + closed_set.len();
+	solution.selected = closed_set.len();
+	solution.pending = open_set.len();
+	solution.total = open_set.len() + closed_set.len();
 
 	// Get solution path
 	solution.path = vec![State { map: last_map, movement: last_move }];
@@ -88,6 +102,6 @@ pub fn solve(start: Map, size: usize, heuristic: &Heuristic, get_cost: &CostFunc
 		solution.path.push(State {map: map, movement: movement });
 	}
 
-	solution.moves = solution.path.len();
+	solution.moves = solution.path.len() - 1;
 	solution
 }

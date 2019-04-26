@@ -1,10 +1,16 @@
 use std::cmp::Ordering;
+use crate::heuristic;
 
 pub type Map = Vec<usize>;
 
 pub type Parsed = (Map, Map, usize);
 
-pub type CostFunc = Box<Fn(usize, usize) -> usize>;
+pub struct Flag
+{
+	pub mem_limit: bool,
+	pub display_bar: bool,
+	pub verbosity: bool
+}
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Position
@@ -89,28 +95,49 @@ impl Move
 	}
 }
 
-pub struct Heuristic
+pub struct Solver
 {
-	pub end: Map,
+	pub name: String,
+	pub goal: Map,
 	pub size: usize,
-	pub func: fn(&Map, &Map, usize) -> usize
+	pub cost_func: fn(&Map, &Map, usize) -> usize,
+	pub uniform: bool,
+	pub greedy: bool
 }
 
-impl Heuristic
+impl Solver
 {
-	pub fn new(end: Map, size: usize, func: fn(&Map, &Map, usize) -> usize) -> Self
+	pub fn new(goal: Map, size: usize, name: &str, algo: &str) -> Self
 	{
+		let heuristic = match name
+		{
+			"misplaced_tiles" => heuristic::misplaced_tiles,
+			"out_of_axes" => heuristic::out_of_axes,
+			"linear_conflict" => heuristic::linear_conflict,
+			"manhattan" | _ => heuristic::manhattan
+		};
+
 		Self
 		{
-			end: end,
+			goal: goal,
 			size: size,
-			func: func
+			cost_func: heuristic,
+			name: name.to_owned(),
+			uniform: algo == "uniform",
+			greedy: algo == "greedy"
 		}
 	}
 
-	pub fn call(&self, current: &Map) -> usize
+	pub fn get_cost(&self, mut node: Node) -> Node
 	{
-		(self.func)(current, &self.end, self.size)
+		if self.uniform
+		{
+			node.f = node.g;
+			return node;
+		}
+		node.h = (self.cost_func)(&node.map, &self.goal, self.size);
+		node.f = if self.greedy { node.h } else { node.h + node.g };
+		node
 	}
 }
 
@@ -140,15 +167,11 @@ impl Node
 		}
 	}
 
-	pub fn create_start(map: Map, size: usize, heuristic: &Heuristic) -> Self
+	pub fn find_position(&mut self, size: usize)
 	{
-		let mut node = Node::new(map);
-		let index = node.map.iter().position(|&x| x == 0).unwrap();
-		node.pos.x = index % size;
-		node.pos.y = index / size;
-		node.h = heuristic.call(&node.map);
-		node.f = node.h;
-		node
+		let index = self.map.iter().position(|&x| x == 0).unwrap();
+		self.pos.x = index % size;
+		self.pos.y = index / size;
 	}
 
 	pub fn generate_moves(&self, size: usize, possible_moves: &[Box<Fn(&Position, usize) -> Move>; 4]) -> Vec<Self>
@@ -195,8 +218,9 @@ pub struct Solution
 {
 	pub path: Vec<State>,
 	pub moves: usize,
-	pub selected_nodes: usize,
-	pub total_nodes: usize,
+	pub selected: usize,
+	pub pending: usize,
+	pub total: usize,
 }
 
 impl Solution
@@ -207,8 +231,9 @@ impl Solution
 		{
 			path: vec![],
 			moves: 0,
-			selected_nodes: 0,
-			total_nodes: 0
+			pending: 0,
+			selected: 0,
+			total: 0
 		}
 	}
 }

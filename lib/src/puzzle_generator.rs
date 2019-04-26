@@ -61,11 +61,11 @@ pub fn get_iterations(difficulty: &str) -> usize
 {
 	let iterations: usize = match difficulty
 	{
-		"easy" => 15,
-		"normal" => 51,
-		"hard" => 141,
+		"easy" => 10,
+		"normal" => 75,
+		"hard" => 200,
+		"epic" => 10000,
 		_ => 1
-
 	};
 	iterations
 }

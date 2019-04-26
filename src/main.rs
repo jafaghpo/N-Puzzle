@@ -8,8 +8,7 @@ use colored::*;
 use std::time::{Instant};
 
 use npuzzle_lib::*;
-use types::{Map,Heuristic, Parsed, Move, Solution, State};
-use heuristic;
+use types::{Flag, Map, Solver, Parsed, Move, State};
 use parser;
 use algorithm;
 use goal_generator::{classic, snail, reversed};
@@ -59,7 +58,7 @@ fn create_generated_puzzle(dirpath: &str, size: &str, level: &str, end_mode: &st
 
 	let puzzle = match level
 	{
-		"easy" | "normal" | "hard" => generate_puzzle(size, get_iterations(level), mode),
+		"easy" | "normal" | "hard" | "epic" => generate_puzzle(size, get_iterations(level), mode),
 		_ => generate_puzzle(size, parse_number(level)?, mode)
 	};
 
@@ -99,18 +98,8 @@ fn display_path(mut path: Vec<State>, size: usize)
 	}
 }
 
-fn display_solution(solution: Solution, size: usize, time: Instant, verbosity: bool)
-{
-	if verbosity { display_path(solution.path, size) }
-	println!("Number of moves: {}", solution.moves);
-	println!("Number of selected states in open set: {}", solution.selected_nodes);
-	println!("Number of states ever represented in memory: {}", solution.total_nodes);
-	println!("Execution time: {:?}", time.elapsed());
-}
-
 fn main()
 {
-
 	let start_time = Instant::now();
 	// Read syntax from cli.yml (Command Line Interpretor)
 	// parse the command line arguments and return the matches
@@ -120,21 +109,15 @@ fn main()
 	let end_mode = matches.value_of("end_mode").unwrap();
 	let generator_size = matches.value_of("generator").unwrap();
 	let level = matches.value_of("difficulty").unwrap();
-	let verbosity = matches.is_present("verbosity");
 	let iterations = matches.value_of("iterations");
-	let heuristic = match matches.value_of("heuristic_function").unwrap()
-	{
-		"misplaced_tiles" => heuristic::misplaced_tiles,
-		"out_of_axes" => heuristic::out_of_axes,
-		"linear_conflict" => heuristic::linear_conflict,
-		"manhattan" | _ => heuristic::manhattan
-	};
+	let heuristic = matches.value_of("heuristic_function").unwrap();
+	let algo = matches.value_of("algorithm").unwrap();
 
-	let cost_func: Box<Fn(usize, usize) -> usize> = match matches.value_of("algorithm").unwrap()
+	let flag = Flag
 	{
-		"uniform_cost"	=> Box::new(| _h, g | g),
-		"greedy"		=> Box::new(| h, _g | h),
-		"a_start" | _	=> Box::new(| h, g | h + g)
+		mem_limit: matches.is_present("memory"),
+		display_bar: matches.is_present("bar"),
+		verbosity: matches.is_present("verbosity")
 	};
 
 	let file = if generator_size == "None" { filename.to_owned() } else
@@ -155,7 +138,14 @@ fn main()
 	let parsed: Result<Parsed, String> = parser::get_map(&file, end_mode);
 	if let Err(e) = &parsed { exit_program(&e) }
 	let (start, end, size) = parsed.unwrap();
-	let heuristic = Heuristic::new(end, size, heuristic);
-	let solution = algorithm::solve(start, size, &heuristic, &cost_func);
-	display_solution(solution, size, start_time, verbosity);
+
+	let solver = Solver::new(end, size, heuristic, algo);
+	let solution = algorithm::solve(start, size, &solver, &flag);
+
+	if flag.verbosity { display_path(solution.path, size) }
+	println!("Number of moves: {}", solution.moves);
+	println!("Number of pending states (open set): {}", solution.pending);
+	println!("Number of selected states (closed set): {}", solution.selected);
+	println!("Number of states ever represented in memory: {}", solution.total);
+	println!("Execution time: {:?}", start_time.elapsed());
 }

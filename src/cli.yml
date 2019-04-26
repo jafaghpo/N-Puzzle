@@ -21,10 +21,10 @@ args:
         short: a
         long: algo
         possible_values:
-            - a_star
+            - standard
             - greedy
-            - uniform_cost
-        default_value: a_star
+            - uniform
+        default_value: standard
     - heuristic_function:
         help: Heuristic used to solve the puzzle.
         short: h
@@ -35,7 +35,18 @@ args:
             - linear_conflict
             - out_of_axes
         default_value: manhattan
-
+    - verbosity:
+        help: Display more informations on the solution
+        short: -v
+        long: verbosity
+    - memory:
+        help: Limit memory usage of open set depending on the heuristic value of the starting state
+        short: -m
+        long: memory
+    - bar:
+        help: Display a progress bar during search
+        short: -b
+        long: bar
     # puzzle generator args
     - generator:
         help: Generate random puzzle of given size
@@ -52,6 +63,7 @@ args:
             - easy
             - normal
             - hard
+            - epic
         default_value: normal
     - iterations:
         requires:
@@ -61,8 +73,4 @@ args:
         long: iterations
         value_names:
             - iterations
-    - verbosity:
-        help: Display more informations on the solution
-        short: -v
-        long: verbosity
 

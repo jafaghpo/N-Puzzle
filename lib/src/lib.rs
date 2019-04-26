@@ -7,5 +7,4 @@ pub mod heuristic;
 pub mod goal_generator;
 pub mod puzzle_generator;
 
-extern crate rayon;
-extern crate indicatif;
+extern crate min_max_heap;

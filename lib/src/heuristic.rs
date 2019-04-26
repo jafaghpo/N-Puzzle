@@ -1,6 +1,5 @@
 use crate::types::Map;
 use std::collections::HashSet;
-// use rayon::prelude::*;
 
 #[inline]
 fn distance(a: usize, b: usize, n: usize) -> usize

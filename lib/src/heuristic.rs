@@ -1,4 +1,4 @@
-use crate::types::Map;
+use crate::types::{Map, Node};
 use std::collections::HashSet;
 
 #[inline]
@@ -12,23 +12,43 @@ fn distance(a: usize, b: usize, n: usize) -> usize
 // Returns the sum of distance between the start position and the end position of each tiles
 // The empty tile is ignored if we want the heuristic to be admissible
 #[inline]
-pub fn manhattan(start: &Map, end: &Map, size: usize) -> usize
+pub fn manhattan(mut node: Node, end: &Map, size: usize) -> Node
 {
-	start
+	node.h = node.map
 		.iter()
 		.enumerate()
-		.fold(0, | acc, (i, x) | acc + if *x != 0 { distance(i, end[*x], size) } else { 0 })
+		.fold(0, | mut acc, (i, x) |
+		{
+			let dist = if *x != 0 { distance(i, end[*x], size) } else { 0 };
+			node.cost[*x] = dist;
+			acc + dist
+		});
+	node
+}
+
+#[inline]
+pub fn partial_manhattan(mut node: Node, end: &Map, size: usize) -> Node
+{
+	let index = node.pos.update(&node.movement.opposite()).as_index(size);
+	let elem = node.map[index];
+	node
 }
 
 
 // Returns the number of misplaced tiles in the puzzle expect the empty tile
 #[inline]
-pub fn misplaced_tiles(start: &Map, end: &Map, _size: usize) -> usize
+pub fn misplaced_tiles(mut node: Node, end: &Map, _size: usize) -> Node
 {
-	start
+	node.h = node.map
 		.iter()
 		.enumerate()
-		.fold(0, | acc, (i, x) | acc + if *x != 0 && i != end[*x] { 1 } else { 0 })
+		.fold(0, | acc, (i, x) | 
+		{
+			let dist = if *x != 0 && i != end[*x] { 1 } else { 0 };
+			node.cost[*x] = dist;
+			acc + dist
+		});
+	node
 }
 
 

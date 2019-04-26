@@ -48,6 +48,17 @@ impl Position
 			Move::No => Position {x: self.x, y: self.y }
 		}
 	}
+
+	pub fn moved_element(&self, movement: &Move) -> Position
+	{
+		match movement
+		{
+			Move::Left(_) => Position { x: self.x + 1, y: self.y },
+			Move::Right(_) => Position { x: self.x - 1, y: self.y },
+			Move::Up(_) => Position { x: self.x, y: self.y + 1 },
+			Move::Down(_) => Position { x: self.x, y: self.y - 1 }
+		}
+	}
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -135,8 +146,13 @@ impl Solver
 			node.f = node.g;
 			return node;
 		}
-		node.h = (self.cost_func)(&node.map, &self.goal, self.size);
+		node.cost = (self.cost_func)(&node.map, &self.goal, self.size);
 		node.f = if self.greedy { node.h } else { node.h + node.g };
+		node
+	}
+
+	pub fn update_cost(&self, mut node: Node) -> Node
+	{
 		node
 	}
 }
@@ -145,6 +161,7 @@ impl Solver
 pub struct Node
 {
 	pub map: Map,
+	pub cost: Map,
 	pub pos: Position,
 	pub movement: Move,
 	pub h: usize,
@@ -158,6 +175,7 @@ impl Node
 	{
 		Self
 		{
+			cost: vec![0; map.len()],
 			map: map,
 			pos: Position { x: 0, y: 0 },
 			movement: Move::No,
@@ -204,7 +222,7 @@ impl Ord for Node
 {
     fn cmp(&self, other: &Node) -> Ordering
 	{
-        other.f.cmp(&self.f)
+        self.f.cmp(&other.f)
     }
 }
 

@@ -113,13 +113,6 @@ fn main()
 	let heuristic = matches.value_of("heuristic_function").unwrap();
 	let algo = matches.value_of("algorithm").unwrap();
 
-	let flag = Flag
-	{
-		mem_limit: matches.is_present("memory"),
-		display_bar: matches.is_present("bar"),
-		verbosity: matches.is_present("verbosity")
-	};
-
 	let file = if generator_size == "None" { filename.to_owned() } else
 	{
 		let result = match iterations
@@ -140,6 +133,13 @@ fn main()
 	let (start, end, size) = parsed.unwrap();
 
 	let solver = Solver::new(end, size, heuristic, algo);
+	let flag = Flag
+	{
+		mem_limit: solver.uniform || matches.is_present("memory"),
+		display_bar: solver.uniform || matches.is_present("bar"),
+		verbosity: matches.is_present("verbosity")
+	};
+
 	let solution = algorithm::solve(start, size, &solver, &flag);
 
 	if flag.verbosity { display_path(solution.path, size) }

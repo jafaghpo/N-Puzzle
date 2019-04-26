@@ -3,9 +3,9 @@ use min_max_heap::MinMaxHeap;
 use crate::types::{Flag, Map, Node, Solver, Position, Move, State, Solution};
 use crate::heuristic::manhattan;
 
-fn get_capacity(h_value: usize, mem_limit: bool) -> usize
+fn get_capacity(h_value: usize, mem_limit: bool, name: &str) -> usize
 {
-	let power = if h_value < 9
+	let mut power = if h_value < 9
 	{
 		1 + h_value as u32
 	}
@@ -13,7 +13,13 @@ fn get_capacity(h_value: usize, mem_limit: bool) -> usize
 	{
 		11 + 2 * (h_value / 5 - 3) as u32
 	};
-	let power = if power > 25 { 25 } else { power };
+	power = match name
+	{
+		"linear_conflict" => power,
+		"manhattan" => power + 1,
+		"out_of_axes" => power + 2,
+		"misplaced_tiles" => power + 3
+	};
 	let capacity = 2usize.pow(power);
 	if mem_limit { println!("Open set limited to 2^{} nodes ({} nodes)", power, capacity) }
 	capacity
@@ -33,8 +39,7 @@ pub fn solve(start: Map, size: usize, solver: &Solver, flag: &Flag) -> Solution
 	start.find_position(size);
 	start = solver.get_cost(start);
 
-	let h_val = if solver.name == "manhattan" { start.h } else { manhattan(&start.map, &solver.goal, size) };
-	let capacity = get_capacity(h_val, flag.mem_limit);
+	let capacity = get_capacity(start.h, flag.mem_limit, &solver.name);
 	let mut open_set: MinMaxHeap<Node> = MinMaxHeap::with_capacity(capacity);
 	let mut closed_set: HashMap<Map, Move> = HashMap::with_capacity(capacity);
 
@@ -47,8 +52,12 @@ pub fn solve(start: Map, size: usize, solver: &Solver, flag: &Flag) -> Solution
 
 	let (last_map, last_move, mut last_pos) = loop
 	{
-		// Get the node with the lowest f cost
-		let current = open_set.pop_max().unwrap();
+		// Get the node with the lowest f cost (or highest for uniform)
+		let current = match solver.uniform
+		{
+			true => open_set.pop_max().unwrap(),
+			false => open_set.pop_min().unwrap(),
+		};
 	
 		// Add the current node to the closed set
 		closed_set.insert(current.map.clone(), current.movement.clone());
@@ -76,7 +85,7 @@ pub fn solve(start: Map, size: usize, solver: &Solver, flag: &Flag) -> Solution
 			// Get rid of the lastest priority node if the size is reaching max capacity
 			if flag.mem_limit && open_set.len() == capacity
 			{
-				open_set.push_pop_min(node);
+				open_set.push_pop_max(node);
 			}
 			else
 			{

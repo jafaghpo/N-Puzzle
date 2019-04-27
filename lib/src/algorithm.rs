@@ -20,6 +20,7 @@ fn get_capacity(h_value: usize, mem_limit: bool, name: &str, greedy: bool) -> us
 		"manhattan" | _ => power + 1
 	};
 	if greedy { power -= 2 }
+	if power > 23 { power = 23 }
 	let capacity = 2usize.pow(power);
 	if mem_limit { println!("Open set limited to 2^{} nodes ({} nodes)", power, capacity) }
 	capacity

@@ -139,12 +139,14 @@ impl Solver
 			"linear_conflict" =>
 			{
 				first_cost = heuristic::linear_conflict;
-				update_cost = heuristic::linear_conflict;
+				update_cost = heuristic::partial_conflict;
+				// update_cost = heuristic::linear_conflict;
 			}
 			"manhattan" | _ =>
 			{
 				first_cost = heuristic::manhattan;
 				update_cost = heuristic::partial_manhattan;
+				// update_cost = heuristic::manhattan;
 			}
 		};
 
@@ -233,6 +235,7 @@ impl Node
 			node.pos = self.pos.update(&movement);
 			node.movement = movement;
 			node.g = self.g + 1;
+			node.h = self.h;
 			moves.push(node);
 		}
 		moves

@@ -39,10 +39,6 @@ args:
         help: Display more informations on the solution
         short: -v
         long: verbosity
-    - memory:
-        help: Limit memory usage of open set depending on the heuristic value of the starting state
-        short: -m
-        long: memory
     - bar:
         help: Display a progress bar during search
         short: -b

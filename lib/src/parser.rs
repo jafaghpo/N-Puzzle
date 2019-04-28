@@ -82,15 +82,6 @@ fn file_to_map(file: String) -> Result<(usize, Vec<usize>), String>
 	Ok((size, map))
 }
 
-// Swap indexes of a vector with their respective values
-pub fn swap_indexes(vec: Vec<usize>) -> Vec<usize>
-{
-	vec
-		.iter()
-		.enumerate()
-		.fold(vec![0; vec.len()], | mut acc, (i, x) | { acc[*x] = i; acc } )
-}
-
 pub fn get_map(filename: &str, goal_mode: &str) -> Result<Parsed, String>
 {
     let file = get_file_content(filename)?;
@@ -115,5 +106,5 @@ pub fn get_map(filename: &str, goal_mode: &str) -> Result<Parsed, String>
 		return Err(format!("The puzzle given is already the solution..."));
 	}
 
-	Ok((start, swap_indexes(end), size))
+	Ok((start, end, size))
 }

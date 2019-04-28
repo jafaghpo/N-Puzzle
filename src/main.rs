@@ -98,6 +98,15 @@ fn display_path(mut path: Vec<State>, size: usize)
 	}
 }
 
+// Swap indexes of a vector with their respective values
+pub fn swap_indexes(vec: &Map) -> Map
+{
+	vec
+		.iter()
+		.enumerate()
+		.fold(vec![0; vec.len()], | mut acc, (i, x) | { acc[*x] = i; acc } )
+}
+
 fn main()
 {
 	let start_time = Instant::now();
@@ -132,11 +141,10 @@ fn main()
 	if let Err(e) = &parsed { exit_program(&e) }
 	let (start, end, size) = parsed.unwrap();
 
-	let solver = Solver::new(end, size, heuristic, algo);
+	let solver = Solver::new(swap_indexes(&end), end, size, heuristic, algo);
 	let flag = Flag
 	{
-		mem_limit: solver.uniform || matches.is_present("memory"),
-		display_bar: solver.uniform || matches.is_present("bar"),
+		display_bar: if solver.uniform { false } else { matches.is_present("bar") },
 		verbosity: matches.is_present("verbosity"),
 		debug: matches.is_present("debug")
 	};

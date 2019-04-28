@@ -7,7 +7,6 @@ pub type Parsed = (Map, Map, usize);
 
 pub struct Flag
 {
-	pub mem_limit: bool,
 	pub display_bar: bool,
 	pub verbosity: bool,
 	pub debug: bool
@@ -61,6 +60,17 @@ impl Position
 			Move::No => Position { x: self.x, y: self.y }
 		}
 	}
+
+	#[inline]
+	pub fn possible_moves(&self, size: usize) -> [Move; 4]
+	{
+		[
+			if self.x > 0 { Move::Left(-1) } else { Move::No },
+			if self.x < size - 1 { Move::Right(1) } else { Move::No },
+			if self.y > 0 { Move::Up(-(size as i64)) } else { Move::No },
+			if self.y < size - 1 { Move::Down(size as i64) } else { Move::No }
+		]
+	}
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -112,6 +122,7 @@ pub struct Solver
 {
 	pub name: String,
 	pub goal: Map,
+	pub end: Map,
 	pub size: usize,
 	pub first_cost: fn(Node, &Map, usize) -> Node,
 	pub update_cost: fn(Node, &Map, usize) -> Node,
@@ -121,7 +132,7 @@ pub struct Solver
 
 impl Solver
 {
-	pub fn new(goal: Map, size: usize, name: &str, algo: &str) -> Self
+	pub fn new(end: Map, goal: Map, size: usize, name: &str, algo: &str) -> Self
 	{
 		let first_cost: fn(Node, &Map, usize) -> Node;
 		let update_cost: fn(Node, &Map, usize) -> Node;
@@ -141,19 +152,18 @@ impl Solver
 			{
 				first_cost = heuristic::linear_conflict;
 				update_cost = heuristic::partial_conflict;
-				// update_cost = heuristic::linear_conflict;
 			}
 			"manhattan" | _ =>
 			{
 				first_cost = heuristic::manhattan;
 				update_cost = heuristic::partial_manhattan;
-				// update_cost = heuristic::manhattan;
 			}
 		};
 
 		Self
 		{
 			goal: goal,
+			end: end,
 			size: size,
 			first_cost: first_cost,
 			update_cost: update_cost,
@@ -168,9 +178,10 @@ impl Solver
 		if self.uniform
 		{
 			node.f = node.g;
+			node.h = 1;
 			return node;
 		}
-		node = (self.first_cost)(node, &self.goal, self.size);
+		node = (self.first_cost)(node, &self.end, self.size);
 		node.f = if self.greedy { node.h } else { node.h + node.g };
 		node
 	}
@@ -180,9 +191,10 @@ impl Solver
 		if self.uniform
 		{
 			node.f = node.g;
+			if node.map == self.goal { node.h = 0 }
 			return node;
 		}
-		node = (self.update_cost)(node, &self.goal, self.size);
+		node = (self.update_cost)(node, &self.end, self.size);
 		node.f = if self.greedy { node.h } else { node.h + node.g };
 		node
 	}
@@ -223,18 +235,18 @@ impl Node
 		self.pos.y = index / size;
 	}
 
-	pub fn generate_moves(&self, size: usize, possible_moves: &[Box<Fn(&Position, usize) -> Move>; 4]) -> Vec<Self>
+	pub fn generate_moves(&self, size: usize) -> Vec<Self>
 	{
+		let possible_moves = self.pos.possible_moves(size);
 		let mut moves: Vec<Node> = vec![];
-		for func in possible_moves
+		for movement in &possible_moves
 		{
-			let movement = func(&self.pos, size);
-			if movement == Move::No { continue }
+			if *movement == Move::No { continue }
 			let map = movement.do_move(&self.map, &self.pos, size);
 			let mut node = Node::new(map);
 			node.cost = self.cost.clone();
 			node.pos = self.pos.update(&movement);
-			node.movement = movement;
+			node.movement = movement.clone();
 			node.g = self.g + 1;
 			node.h = self.h;
 			moves.push(node);

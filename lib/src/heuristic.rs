@@ -72,7 +72,7 @@ pub fn out_of_axes(mut node: Node, end: &Map, size: usize) -> Node
 		let elem = node.map[index];
 		if elem == 0 { continue }
 		node.cost[elem] = (index / size != end[elem] / size) as usize
-						+ (index & size != end[elem] % size) as usize;
+						+ (index % size != end[elem] % size) as usize;
 	}
 	node.h = node.cost.iter().sum();
 	node
@@ -84,7 +84,7 @@ pub fn partial_out_of_axes(mut node: Node, end: &Map, size: usize) -> Node
 	let index = node.pos.moved_element(&node.movement).as_index(size);
 	let elem = node.map[index];
 	let cost = (index / size != end[elem] / size) as usize
-			+ (index & size != end[elem] % size) as usize;
+			+ (index % size != end[elem] % size) as usize;
 	node.h = (node.h as i32 + (cost as i32 - node.cost[elem] as i32)) as usize;
 	node.cost[elem] = cost;
 	node
@@ -142,15 +142,43 @@ impl Conflict
 		}
 	}
 
+	// Check every possibility of conflict
+	// (Can be simplified)
 	fn conflict_with(&self, other: &Self, way: i32) -> bool
 	{
 		match (self.direction, other.direction, way)
 		{
-			// Can't be in conflict if they go the same way
-			n if n.0 == n.1 => false,
+			// Can't be in conflict if they both don't need to move
+			(0, 0, ..) => false,
 
-			// If they go in opposite ways on the same axis, then they are in conflict
-			n if n.0 == -n.1 && n.0.abs() == n.2.abs() => true,
+			// If they both go in the same direction, check if the one before doesn't stop after the other
+			n if n.0 == n.1 && n.0.abs() == n.2.abs() =>
+			{
+				match self.direction > 0
+				{
+					true => match self.start < other.start
+					{
+						true => self.end >= other.end,
+						false => self.end <= other.end
+					}
+					false => match self.start > other.start
+					{
+						true => self.end <= other.end,
+						false => self.end >= other.end
+					}
+				}
+			}
+
+			// If they go in opposite ways on the same axis
+			// then they are in conflict if they are in the way of each other
+			n if n.0 == -n.1 && n.0.abs() == n.2.abs() =>
+			{
+				match self.direction > 0
+				{
+					true => self.start < other.start && self.end >= other.end,
+					false => self.start > other.start && self.end <= other.end,
+				}
+			}
 
 			// If self doesn't move && moving on the same axis then check if self is in the way of other
 			n if n.0 == 0 && n.1.abs() == n.2.abs() =>
@@ -307,124 +335,72 @@ pub fn partial_conflict(mut node: Node, end: &Map, size: usize) -> Node
 	node
 }
 
-// #[cfg(test)]
-// mod tests
-// {
-//     use crate::types::Map;
+#[cfg(test)]
+mod tests
+{
+    use crate::types::{Map, Node};
 
-// 	#[test]
-// 	fn distance()
-// 	{
-// 		assert_eq!(super::distance(1, 8, 3), 3);
-// 	}
+	#[test]
+	fn distance()
+	{
+		assert_eq!(super::distance(1, 8, 3), 3);
+	}
 
-//     #[test]
-//     fn manhattan_0()
-// 	{
-//         let start: Map = vec![1, 2, 3, 4, 5, 6, 7, 8, 0];
-// 		// index and position of end were swapped => [tile 0 at index 8, tile 1 at index 0, ...]
-//         let end: Map = vec![8, 0, 1, 2, 3, 4, 5, 6, 7];
+    #[test]
+    fn manhattan()
+	{
+		let start: Node = Node::new(vec![2, 1, 8, 4, 6, 5, 7, 3, 0]);
+        let end: Map = vec![8, 0, 1, 2, 3, 4, 5, 6, 7];
 
-//         assert_eq!(super::manhattan(&start, &end, 3), 0);
-//     }
+        assert_eq!(super::manhattan(start, &end, 3).h, 10);
+    }
 
-//     #[test]
-//     fn manhattan_1()
-// 	{
-//         let start: Map = vec![1, 2, 3, 4, 5, 6, 7, 0, 8];
-//         let end: Map = vec![8, 0, 1, 2, 3, 4, 5, 6, 7];
+	#[test]
+	fn misplaced_tiles()
+	{
+		let start: Node = Node::new(vec![2, 3, 4, 5, 6, 7, 8, 0, 1]);
+        let end: Map = vec![8, 0, 1, 2, 3, 4, 5, 6, 7];
 
-//         assert_eq!(super::manhattan(&start, &end, 3), 1);
-//     }
+        assert_eq!(super::misplaced_tiles(start, &end, 3).h, 8);
+	}
 
-//     #[test]
-//     fn manhattan_10()
-// 	{
-//         let start: Map = vec![2, 1, 8, 4, 6, 5, 7, 3, 0];
-//         let end: Map = vec![8, 0, 1, 2, 3, 4, 5, 6, 7];
+	#[test]
+	fn out_of_axes()
+	{
+		let start: Node = Node::new(vec![
+			0, 1, 2,
+			3, 4, 5,
+			6, 7, 8]);
+        let end: Map = vec![8, 0, 1, 2, 3, 4, 5, 6, 7];
 
-//         assert_eq!(super::manhattan(&start, &end, 3), 10);
-//     }
+        assert_eq!(super::out_of_axes(start, &end, 3).h, 10);
+	}
 
-// 	#[test]
-// 	fn misplaced_tiles_0()
-// 	{
-// 		let start: Map = vec![1, 2, 3, 4, 5, 6, 7, 8, 0];
-//         let end: Map = vec![8, 0, 1, 2, 3, 4, 5, 6, 7];
+	#[test]
+	fn linear_conflict_1()
+	{
+		let start: Node = Node::new(vec![3, 0, 1, 2, 4, 6, 8, 5, 7]);
+        let end: Map = vec![8, 0, 1, 2, 3, 4, 5, 6, 7];
 
-//         assert_eq!(super::misplaced_tiles(&start, &end, 3), 0);
-// 	}
+        assert_eq!(super::linear_conflict(start, &end, 3).h, 15);
+	}
 
-// 	#[test]
-// 	fn misplaced_tiles_1()
-// 	{
-// 		let start: Map = vec![1, 2, 3, 4, 5, 6, 7, 0, 8];
-//         let end: Map = vec![8, 0, 1, 2, 3, 4, 5, 6, 7];
+	#[test]
+	fn linear_conflict_2()
+	{
+		let start: Node = Node::new(vec![3, 8, 1, 6, 4, 5, 0, 2, 7]);
+        let end: Map = vec![8, 0, 1, 2, 3, 4, 5, 6, 7];
 
-//         assert_eq!(super::misplaced_tiles(&start, &end, 3), 1);
-// 	}
+        assert_eq!(super::linear_conflict(start, &end, 3).h, 22);
+	}
 
-// 	#[test]
-// 	fn misplaced_tiles_8()
-// 	{
-// 		let start: Map = vec![2, 3, 4, 5, 6, 7, 8, 0, 1];
-//         let end: Map = vec![8, 0, 1, 2, 3, 4, 5, 6, 7];
+	#[test]
+	fn linear_conflict_3()
+	{
+		let start: Node = Node::new(vec![4, 1, 15, 2, 6, 8, 5, 7, 12, 9, 3, 10, 14, 13, 11, 0]);
+        let end: Map = vec![15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
 
-//         assert_eq!(super::misplaced_tiles(&start, &end, 3), 8);
-// 	}
+        assert_eq!(super::linear_conflict(start, &end, 4).h, 46);
+	}
 
-// 	#[test]
-// 	fn out_of_axes_0()
-// 	{
-// 		let start: Map = vec![1, 2, 3, 4, 5, 6, 7, 8, 0];
-//         let end: Map = vec![8, 0, 1, 2, 3, 4, 5, 6, 7];
-
-//         assert_eq!(super::out_of_axes(&start, &end, 3), 0);
-// 	}
-
-// 	#[test]
-// 	fn out_of_axes_1()
-// 	{
-// 		let start: Map = vec![1, 2, 3, 4, 5, 6, 7, 0, 8];
-//         let end: Map = vec![8, 0, 1, 2, 3, 4, 5, 6, 7];
-
-//         assert_eq!(super::out_of_axes(&start, &end, 3), 1);
-// 	}
-
-// 	#[test]
-// 	fn out_of_axes_10()
-// 	{
-// 		let start: Map = vec![0, 1, 2, 3, 4, 5, 6, 7, 8];
-//         let end: Map = vec![8, 0, 1, 2, 3, 4, 5, 6, 7];
-
-//         assert_eq!(super::out_of_axes(&start, &end, 3), 10);
-// 	}
-
-// 	#[test]
-// 	fn linear_conflict_3x3_1()
-// 	{
-// 		let start: Map = vec![3, 0, 1, 2, 4, 6, 8, 5, 7];
-//         let end: Map = vec![8, 0, 1, 2, 3, 4, 5, 6, 7];
-
-//         assert_eq!(super::linear_conflict(&start, &end, 3), 15);
-// 	}
-
-// 	#[test]
-// 	fn linear_conflict_3x3_2()
-// 	{
-// 		let start: Map = vec![3, 8, 1, 6, 4, 5, 0, 2, 7];
-//         let end: Map = vec![8, 0, 1, 2, 3, 4, 5, 6, 7];
-
-//         assert_eq!(super::linear_conflict(&start, &end, 3), 22);
-// 	}
-
-// 	#[test]
-// 	fn linear_conflict_4x4()
-// 	{
-// 		let start: Map = vec![4, 1, 15, 2, 6, 8, 5, 7, 12, 9, 3, 10, 14, 13, 11, 0];
-//         let end: Map = vec![15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
-
-//         assert_eq!(super::linear_conflict(&start, &end, 4), 46);
-// 	}
-
-// }
+}

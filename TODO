@@ -8,28 +8,18 @@ Tasks (in order):
 [X] Create Unit tests and Integration tests
 [X] Create a generator of random puzzles available from command line
 [X] Create heuristic functions
-[?] Decide to use either async with tokio crate (if possible) or multithreading with crossbeam / rayon crate
 [X] Create open set as a priority queue with F cost as priority
 [X] Create close set as a hash map (see Optimization section)
 [X] Create A* algo with its variants (weighted, greedy, uniform cost)
-[ ] Create function(s) to print solution (complexity of time & memory, number of moves, each state of final path, exec time)
-[-] Build UI in JS and link it to project with webassembly
-[-] Build a play mode for UI
+[X] Create function(s) to print solution (complexity of time & memory, number of moves, each state of final path, exec time)
+[?] Decide to use either async with tokio crate (if possible) or multithreading with crossbeam / rayon crate
+[ ] Create a feature to estimate npuzzle time with a multivariate regression model.
+	Model features:
+		- heuristic value of start node
+		- type of heuristic mapped from 0 to 3 (misplaced: 0, axes: 1, manhattan: 2, conflict: 3)
+		- type of algorithm (uniform: 0, memory limited A*: 1, standard A*: 2, greedy: 3)
 
 Optimizations:
 (MT) tag stands for MultiThreading. Every optimizations with (MT) tag will run at the same time and wait for each other
 
 - (MT) Run heuristic function on state of possible moves at the same time with multithreading
-
-- Create goal state as Vector<usize> with tile values as indexes and their indexes as values
-	=> This enables an easy access of goal position for a specific tile to calculate heuristic value faster
-
-- Create each state as Vector<usize> inside a 'State' structure and keep position of empty tile
-	=> This enables to access directly the tile to move and do simple maths to know positions of possible moves
-	=> for empty position 'E' and puzzle size 'N' as in 'N'-Puzzle:
-		- E - N to move UP
-		- E + N to move DOWN
-		- E - 1 to move LEFT
-		- E + 1 to move RIGHT
-
-- Put #[inline] tag for small functions called many times in solver to speed up runtime

@@ -26,36 +26,36 @@ fn get_capacity(h_value: usize, mem_limit: bool, name: &str, greedy: bool) -> us
 	capacity
 }
 
-// fn display_map(map: &Map, size: usize)
-// {
-// 	for i in 0..(size * size)
-// 	{
-// 		if i != 0 && i % size == 0 { println!("\n") }
-// 		print!(" {}\t", map[i]);
-// 	}
-// 	println!("\n");
-// }
+fn display_map(map: &Map, size: usize)
+{
+	for i in 0..(size * size)
+	{
+		if i != 0 && i % size == 0 { println!("\n") }
+		print!(" {}\t", map[i]);
+	}
+	println!("\n");
+}
 
-// fn debug_parent(node: &Node, index: usize, size: usize, open_set: &MinMaxHeap<Node>, closed_set: &HashMap<Map, Move>)
-// {
-// 	println!("Parent N°{}", index);
-// 	display_map(&node.map, size);
-// 	println!("Costs: f({}) g({}) h({})", node.f, node.g, node.h);
-// 	println!("Position: x({}) y({})", node.pos.x, node.pos.y);
-// 	println!("Move: {:?}", node.movement);
-// 	println!("Open set: {} | Closed set: {}", open_set.len(), closed_set.len());
-// 	println!("Open set capacity: {} | Closed set capacity: {}", open_set.capacity(), closed_set.capacity());
-// 	println!("");
-// }
+fn debug_parent(node: &Node, index: usize, size: usize, open_set: &MinMaxHeap<Node>, closed_set: &HashMap<Map, Move>)
+{
+	println!("Parent N°{}", index);
+	display_map(&node.map, size);
+	println!("Costs: f({}) g({}) h({})", node.f, node.g, node.h);
+	println!("Position: x({}) y({})", node.pos.x, node.pos.y);
+	println!("Move: {:?}", node.movement);
+	println!("Open set: {} | Closed set: {}", open_set.len(), closed_set.len());
+	println!("Open set capacity: {} | Closed set capacity: {}", open_set.capacity(), closed_set.capacity());
+	println!("");
+}
 
-// fn debug_child(node: &Node, index: usize)
-// {
-// 	println!("   Child N°{}", index);
-// 	println!("   Costs: f({}) g({}) h({})", node.f, node.g, node.h);
-// 	println!("   Position: x({}) y({})", node.pos.x, node.pos.y);
-// 	println!("   Move: {:?}", node.movement);
-// 	println!("");
-// }
+fn debug_child(node: &Node, index: usize)
+{
+	println!("   Child N°{}", index);
+	println!("   Costs: f({}) g({}) h({})", node.f, node.g, node.h);
+	println!("   Position: x({}) y({})", node.pos.x, node.pos.y);
+	println!("   Move: {:?}", node.movement);
+	println!("");
+}
 
 pub fn solve(start: Map, size: usize, solver: &Solver, flag: &Flag) -> Solution
 {
@@ -96,7 +96,7 @@ pub fn solve(start: Map, size: usize, solver: &Solver, flag: &Flag) -> Solution
 		// Add the current node to the closed set
 		closed_set.insert(current.map.clone(), current.movement.clone());
 
-		if flag.display_bar && current.h < best_h
+		if flag.debug == false && flag.display_bar && current.h < best_h
 		{
 			i += (best_h - current.h) as f32;
 			_percent = i / max_h * 100.0;
@@ -108,7 +108,11 @@ pub fn solve(start: Map, size: usize, solver: &Solver, flag: &Flag) -> Solution
 		// If the end node is found
 		if current.h == 0 { break (current.map, current.movement, current.pos) }
 
-		// debug_parent(&current, _debug_parent, size, &open_set, &closed_set);
+		if flag.debug
+		{
+			debug_parent(&current, _debug_parent, size, &open_set, &closed_set);
+			_debug_parent += 1;
+		}
 
 		// Get the list of possible moves
 		let moves: Vec<Node> = current.generate_moves(size, &possible_moves);
@@ -118,8 +122,11 @@ pub fn solve(start: Map, size: usize, solver: &Solver, flag: &Flag) -> Solution
 			if closed_set.contains_key(&node.map) { continue }
 			node = solver.update_cost(node);
 
-			// debug_child(&node, _debug_child);
-			_debug_child += 1;
+			if flag.debug
+			{
+				debug_child(&node, _debug_child);
+				_debug_child += 1;
+			}
 
 			// Get rid of the lastest priority node if the size is reaching max capacity
 			if flag.mem_limit && open_set.len() == capacity
@@ -131,7 +138,6 @@ pub fn solve(start: Map, size: usize, solver: &Solver, flag: &Flag) -> Solution
 				open_set.push(node);
 			}
 		}
-		_debug_parent += 1;
 	};
 
 	let mut solution = Solution::new();

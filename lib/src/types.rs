@@ -9,7 +9,8 @@ pub struct Flag
 {
 	pub mem_limit: bool,
 	pub display_bar: bool,
-	pub verbosity: bool
+	pub verbosity: bool,
+	pub debug: bool
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]

@@ -108,7 +108,7 @@ fn main()
 	let filename = matches.value_of("file").unwrap();
 	let end_mode = matches.value_of("end_mode").unwrap();
 	let generator_size = matches.value_of("generator").unwrap();
-	let level = matches.value_of("difficulty").unwrap();
+	let level = matches.value_of("level").unwrap();
 	let iterations = matches.value_of("iterations");
 	let heuristic = matches.value_of("heuristic_function").unwrap();
 	let algo = matches.value_of("algorithm").unwrap();
@@ -137,7 +137,8 @@ fn main()
 	{
 		mem_limit: solver.uniform || matches.is_present("memory"),
 		display_bar: solver.uniform || matches.is_present("bar"),
-		verbosity: matches.is_present("verbosity")
+		verbosity: matches.is_present("verbosity"),
+		debug: matches.is_present("debug")
 	};
 
 	let solution = algorithm::solve(start, size, &solver, &flag);

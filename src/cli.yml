@@ -47,18 +47,22 @@ args:
         help: Display a progress bar during search
         short: -b
         long: bar
+    - debug:
+        help: Show live information of nodes
+        short: -d
+        long: debug
     # puzzle generator args
     - generator:
         help: Generate random puzzle of given size
         long: generator
         short: g
         default_value: None
-    - difficulty:
+    - level:
         requires:
             - generator
         help: Set level difficulty for generated puzzle
-        short: d
-        long: difficulty
+        short: l
+        long: level
         possible_values:
             - easy
             - normal

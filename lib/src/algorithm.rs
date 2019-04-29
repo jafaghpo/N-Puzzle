@@ -1,6 +1,9 @@
 use std::collections::{HashMap};
 use min_max_heap::MinMaxHeap;
-use crate::types::{Flag, Map, Node, Solver, Move, Solution};
+use crate::types::{Flag, Map, Node, Solver, Move};
+use indicatif::{ ProgressBar, ProgressStyle };
+use colored::*;
+use std::time::{Instant};
 
 fn display_map(map: &Map, size: usize)
 {
@@ -10,6 +13,14 @@ fn display_map(map: &Map, size: usize)
 		print!(" {}\t", map[i]);
 	}
 	println!("\n");
+}
+
+fn create_progress_info(size: f32) -> ProgressBar
+{
+	let info = ProgressBar::new(size as u64);
+	info.set_style(ProgressStyle::default_bar()
+		.template(&format!("{{pos:}} of {:} | {{msg:}}", size,)));
+	info
 }
 
 fn debug_parent(node: &Node, index: usize, size: usize, open_set: &MinMaxHeap<Node>, closed_set: &HashMap<Map, Move>)
@@ -33,7 +44,7 @@ fn debug_child(node: &Node, index: usize)
 	println!("");
 }
 
-pub fn solve(start: Map, size: usize, solver: Solver, flag: &Flag) -> Solution
+pub fn solve(start: Map, size: usize, solver: Solver, flag: &Flag, start_time: Instant)
 {
 	let mut start = Node::new(start);
 	start.find_position(size);
@@ -46,6 +57,7 @@ pub fn solve(start: Map, size: usize, solver: Solver, flag: &Flag) -> Solution
 	let max_h: f32 = start.h as f32;
 	let mut i: f32 = 0.0;
 	let mut _percent: f32 = 0.0;
+	let info = create_progress_info(max_h);
 
 	open_set.push(start);
 
@@ -67,13 +79,17 @@ pub fn solve(start: Map, size: usize, solver: Solver, flag: &Flag) -> Solution
 
 		// Add the current node to the closed set
 
-		if flag.debug == false && flag.display_bar && current.h < best_h
+		if flag.debug == false && current.h < best_h
 		{
+			info.set_position(i as u64);
 			i += (best_h - current.h) as f32;
 			_percent = i / max_h * 100.0;
-			println!("progress: {:} of {:}, capacity: {} open set: {}, closed set {}, percent = {:.2}%",
-				i, max_h, open_set.capacity(), open_set.len(), closed_set.len(), _percent);
-			best_h = current.h
+			info.set_message(&format!("{} | open states: {} | closed states: {} | total states: {}",
+				&format!("{:.2}%", _percent).magenta(),
+				open_set.len().to_string().green(),
+				closed_set.len().to_string().red(),
+				(open_set.len() + closed_set.len()).to_string().cyan()));
+			best_h = current.h;
 		}
 
 		// If the end node is found
@@ -81,7 +97,8 @@ pub fn solve(start: Map, size: usize, solver: Solver, flag: &Flag) -> Solution
 		{
 			let end_node = current.clone();
 			closed_set.insert(current.map, current.movement.clone());
-			break end_node.get_solution(solver.goal, size, &open_set, &closed_set)
+			info.finish();
+			break end_node.get_solution(solver.goal, size, &open_set, &closed_set, &flag, start_time)
 		}
 		else
 		{

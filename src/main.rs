@@ -8,7 +8,7 @@ use colored::*;
 use std::time::{Instant};
 
 use npuzzle_lib::*;
-use types::{Flag, Map, Solver, Parsed, Move, State};
+use types::{Flag, Map, Solver, Parsed};
 use parser;
 use algorithm;
 use goal_generator::{classic, snail, reversed};
@@ -72,34 +72,6 @@ fn create_generated_puzzle(dirpath: &str, size: &str, level: &str, end_mode: &st
 	Ok(filepath)
 }
 
-fn display_map(map: &Map, size: usize)
-{
-	for i in 0..(size * size)
-	{
-		if i != 0 && i % size == 0 { println!("\n") }
-		print!("    {}", map[i]);
-	}
-	println!("\n");
-}
-
-fn display_path(mut path: Vec<State>, size: usize)
-{
-	while let Some(state) = path.pop()
-	{
-		match state.movement
-		{
-			Move::Left(_) => println!("   Move [Left]"),
-			Move::Right(_) => println!("   Move [Right]"),
-			Move::Up(_) => println!("   Move [Up]"),
-			Move::Down(_) => println!("   Move [Down]"),
-			Move::No => println!("   [Start State]"),
-		};
-		println!("");
-		display_map(&state.map, size);
-		println!("------------------------");
-	}
-}
-
 // Swap indexes of a vector with their respective values
 pub fn swap_indexes(vec: &Map) -> Map
 {
@@ -151,12 +123,5 @@ fn main()
 		debug: matches.is_present("debug")
 	};
 
-	let solution = algorithm::solve(start, size, solver, &flag);
-
-	if flag.verbosity { display_path(solution.path, size) }
-	println!("Number of moves: {}", solution.moves);
-	println!("Number of pending states (open set): {}", solution.pending);
-	println!("Number of selected states (closed set): {}", solution.selected);
-	println!("Number of states ever represented in memory: {}", solution.total);
-	println!("Execution time: {:?}", start_time.elapsed());
+	algorithm::solve(start, size, solver, &flag, start_time);
 }

@@ -2,6 +2,8 @@ use std::cmp::Ordering;
 use crate::heuristic;
 use min_max_heap::MinMaxHeap;
 use std::collections::HashMap;
+use std::time::{Instant};
+use colored::Colorize;
 
 pub type Map = Vec<usize>;
 
@@ -19,6 +21,32 @@ pub struct Position
 {
 	pub x: usize,
 	pub y: usize
+}
+
+fn display_map(map: &Map, size: usize)
+{
+	for i in 0..(size * size)
+	{
+		if i != 0 && i % size == 0 { println!("\n") }
+		print!(" {}\t", map[i]);
+	}
+	println!("\n\n------------------------------------\n");
+}
+
+fn display_path(mut path: Vec<State>, size: usize)
+{
+	while let Some(state) = path.pop()
+	{
+		match state.movement
+		{
+			Move::Left(_) => println!("[Left]"),
+			Move::Right(_) => println!("[Right]"),
+			Move::Up(_) => println!("[Up]"),
+			Move::Down(_) => println!("[Down]"),
+			Move::No => println!("[Start State]"),
+		};
+		display_map(&state.map, size);
+	}
 }
 
 impl Position
@@ -266,7 +294,7 @@ impl Node
 		moves
 	}
 
-	pub fn get_solution(&self, end: Map, size: usize, open_set: &MinMaxHeap<Node>, closed_set: &HashMap<Map, Move>) -> Solution
+	pub fn get_solution(&self, end: Map, size: usize, open_set: &MinMaxHeap<Node>, closed_set: &HashMap<Map, Move>, flag: &Flag, start_time: Instant)
 	{
 		let mut solution = Solution::new();
 		solution.selected = closed_set.len();
@@ -285,7 +313,15 @@ impl Node
 			solution.path.push(State {map: map, movement: movement.clone() });
 		}
 		solution.moves = solution.path.len() - 1;
-		solution
+		if flag.verbosity 
+		{
+			display_path(solution.path, size);
+			println!("Number of pending states (open set): {}", solution.pending.to_string().green());
+			println!("Number of selected states (closed set): {}", solution.selected.to_string().red());
+			println!("Number of states ever represented in memory: {}", solution.total.to_string().cyan());
+		}
+		println!("Number of moves: {}", solution.moves.to_string().yellow());
+		println!("Execution time: {}", &format!("{:?}",start_time.elapsed()).bright_blue().bold());
 	}
 }
 

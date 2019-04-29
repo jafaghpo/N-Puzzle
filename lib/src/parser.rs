@@ -26,6 +26,7 @@ fn file_to_map(file: String) -> Result<(usize, Vec<usize>), String>
 	let mut lines: Vec<&str> = file
 		.lines()
 		.map(|line| line.split("#").nth(0).unwrap())
+		.map(|line| line.split("//").nth(0).unwrap())
 		.filter(|&line| line != "")
 		.map(|line| line.trim())
 		.collect();

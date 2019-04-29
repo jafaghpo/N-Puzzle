@@ -1,5 +1,7 @@
 use std::cmp::Ordering;
 use crate::heuristic;
+use min_max_heap::MinMaxHeap;
+use std::collections::HashMap;
 
 pub type Map = Vec<usize>;
 
@@ -182,7 +184,11 @@ impl Solver
 			return node;
 		}
 		node = (self.first_cost)(node, &self.end, self.size);
-		node.f = if self.greedy { node.h } else { node.h + node.g };
+		match self.greedy
+		{
+			true => { node.f = node.h; node.t = node.g },
+			false => { node.f = node.h + node.g; node.t = node.h }
+		};
 		node
 	}
 
@@ -195,7 +201,11 @@ impl Solver
 			return node;
 		}
 		node = (self.update_cost)(node, &self.end, self.size);
-		node.f = if self.greedy { node.h } else { node.h + node.g };
+		match self.greedy
+		{
+			true => { node.f = node.h; node.t = node.g },
+			false => { node.f = node.h + node.g; node.t = node.h }
+		};
 		node
 	}
 }
@@ -209,7 +219,8 @@ pub struct Node
 	pub movement: Move,
 	pub h: usize,
 	pub g: usize,
-	pub f: usize
+	pub f: usize,
+	pub t: usize
 }
 
 impl Node
@@ -224,7 +235,8 @@ impl Node
 			movement: Move::No,
 			f: 0,
 			g: 0,
-			h: 0
+			h: 0,
+			t: 0
 		}
 	}
 
@@ -253,21 +265,43 @@ impl Node
 		}
 		moves
 	}
-}
 
-impl PartialOrd for Node
-{
-    fn partial_cmp(&self, other: &Node) -> Option<Ordering>
+	pub fn get_solution(&self, end: Map, size: usize, open_set: &MinMaxHeap<Node>, closed_set: &HashMap<Map, Move>) -> Solution
 	{
-        Some(self.cmp(other))
-    }
+		let mut solution = Solution::new();
+		solution.selected = closed_set.len();
+		solution.pending = open_set.len();
+		solution.total = open_set.len() + closed_set.len();
+
+		let mut last_pos = self.pos.clone();
+		solution.path = vec![State { map: end, movement: self.movement.clone() }];
+		loop
+		{
+			let last = solution.path.last().unwrap();
+			if last.movement == Move::No { break }
+			let map = last.movement.opposite().do_move(&last.map, &last_pos, size);
+			let movement = closed_set.get(&map).unwrap();
+			last_pos = last_pos.update(&last.movement.opposite());
+			solution.path.push(State {map: map, movement: movement.clone() });
+		}
+		solution.moves = solution.path.len() - 1;
+		solution
+	}
 }
 
 impl Ord for Node
 {
     fn cmp(&self, other: &Node) -> Ordering
 	{
-        other.f.cmp(&self.f)
+        self.partial_cmp(other).unwrap()
+    }
+}
+
+impl PartialOrd for Node
+{
+    fn partial_cmp(&self, other: &Node) -> Option<Ordering>
+	{
+		Some(other.f.cmp(&self.f).then(other.t.cmp(&self.t)))
     }
 }
 

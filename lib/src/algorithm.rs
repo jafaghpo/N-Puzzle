@@ -1,6 +1,6 @@
-use std::collections::HashMap;
+use std::collections::{HashMap};
 use min_max_heap::MinMaxHeap;
-use crate::types::{Flag, Map, Node, Solver, Move, State, Solution};
+use crate::types::{Flag, Map, Node, Solver, Move, Solution};
 
 fn display_map(map: &Map, size: usize)
 {
@@ -33,7 +33,7 @@ fn debug_child(node: &Node, index: usize)
 	println!("");
 }
 
-pub fn solve(start: Map, size: usize, solver: &Solver, flag: &Flag) -> Solution
+pub fn solve(start: Map, size: usize, solver: Solver, flag: &Flag) -> Solution
 {
 	let mut start = Node::new(start);
 	start.find_position(size);
@@ -51,13 +51,21 @@ pub fn solve(start: Map, size: usize, solver: &Solver, flag: &Flag) -> Solution
 
 	let mut _debug_parent = 1;
 
-	let (last_map, last_move, mut last_pos) = loop
+	loop
 	{
 		// Get the node with the lowest f cost
 		let current = open_set.pop_max().unwrap();
 
+		if flag.debug
+		{
+			debug_parent(&current, _debug_parent, size, &open_set, &closed_set);
+			_debug_parent += 1;
+		}
+
+		// Get the list of possible moves
+		let moves: Vec<Node> = current.generate_moves(size);
+
 		// Add the current node to the closed set
-		closed_set.insert(current.map.clone(), current.movement.clone());
 
 		if flag.debug == false && flag.display_bar && current.h < best_h
 		{
@@ -69,16 +77,17 @@ pub fn solve(start: Map, size: usize, solver: &Solver, flag: &Flag) -> Solution
 		}
 
 		// If the end node is found
-		if current.h == 0 { break (current.map, current.movement, current.pos) }
-
-		if flag.debug
+		if current.h == 0
 		{
-			debug_parent(&current, _debug_parent, size, &open_set, &closed_set);
-			_debug_parent += 1;
+			let end_node = current.clone();
+			closed_set.insert(current.map, current.movement.clone());
+			break end_node.get_solution(solver.goal, size, &open_set, &closed_set)
+		}
+		else
+		{
+			closed_set.insert(current.map, current.movement.clone());
 		}
 
-		// Get the list of possible moves
-		let moves: Vec<Node> = current.generate_moves(size);
 		let mut _debug_child = 1;
 		for mut node in moves
 		{
@@ -93,25 +102,5 @@ pub fn solve(start: Map, size: usize, solver: &Solver, flag: &Flag) -> Solution
 
 			open_set.push(node);
 		}
-	};
-
-	let mut solution = Solution::new();
-	solution.selected = closed_set.len();
-	solution.pending = open_set.len();
-	solution.total = open_set.len() + closed_set.len();
-
-	// Get solution path
-	solution.path = vec![State { map: last_map, movement: last_move }];
-	loop
-	{
-		let last = solution.path.last().unwrap();
-		if last.movement == Move::No { break }
-		let map = last.movement.opposite().do_move(&last.map, &last_pos, size);
-		let movement = closed_set.remove(&map).unwrap();
-		last_pos = last_pos.update(&last.movement.opposite());
-		solution.path.push(State {map: map, movement: movement });
 	}
-
-	solution.moves = solution.path.len() - 1;
-	solution
 }

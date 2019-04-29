@@ -77,9 +77,9 @@ fn display_map(map: &Map, size: usize)
 	for i in 0..(size * size)
 	{
 		if i != 0 && i % size == 0 { println!("\n") }
-		print!(" {}\t", map[i]);
+		print!("    {}", map[i]);
 	}
-	println!("\n\n------------------------------------\n");
+	println!("\n");
 }
 
 fn display_path(mut path: Vec<State>, size: usize)
@@ -88,13 +88,15 @@ fn display_path(mut path: Vec<State>, size: usize)
 	{
 		match state.movement
 		{
-			Move::Left(_) => println!("[Left]"),
-			Move::Right(_) => println!("[Right]"),
-			Move::Up(_) => println!("[Up]"),
-			Move::Down(_) => println!("[Down]"),
-			Move::No => println!("[Start State]"),
+			Move::Left(_) => println!("   Move [Left]"),
+			Move::Right(_) => println!("   Move [Right]"),
+			Move::Up(_) => println!("   Move [Up]"),
+			Move::Down(_) => println!("   Move [Down]"),
+			Move::No => println!("   [Start State]"),
 		};
+		println!("");
 		display_map(&state.map, size);
+		println!("------------------------");
 	}
 }
 
@@ -149,7 +151,7 @@ fn main()
 		debug: matches.is_present("debug")
 	};
 
-	let solution = algorithm::solve(start, size, &solver, &flag);
+	let solution = algorithm::solve(start, size, solver, &flag);
 
 	if flag.verbosity { display_path(solution.path, size) }
 	println!("Number of moves: {}", solution.moves);

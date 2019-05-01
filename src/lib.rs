@@ -1,11 +1,13 @@
+use std::fmt;
+use std::fs::File;
+use std::io::Write;
+
 pub mod solver;
 pub mod node;
 pub mod parser;
 pub mod algorithm;
 pub mod heuristic;
 pub mod generator;
-
-pub type Parsed = (Map, Map, usize);
 
 pub struct Args
 {
@@ -18,10 +20,9 @@ pub struct Args
 	pub flag: Flag
 }
 
-use std::fmt;
-
 pub type Map = Vec<usize>;
-pub struct Container(Map, usize);
+
+pub struct Container(pub Map, pub usize);
 
 impl Container
 {
@@ -32,6 +33,22 @@ impl Container
 			.enumerate()
 			.fold(vec![0; self.0.len()], | mut acc, (i, x) | { acc[*x] = i; acc } )
     }
+
+	pub fn create_file(&self, filepath: &str) -> Result<(), String>
+	{
+		let mut file = match File::create(filepath)
+		{
+			Ok(f) => Ok(f),
+			Err(e) => Err(e.to_string())
+		}?;
+
+		let data = format!("{}\n{}", self.1, self.to_string());
+		if let Err(e) = file.write_all(data.as_bytes())
+		{
+			return Err(e.to_string())
+		};
+		Ok(())
+	}
 }
 
 impl fmt::Display for Container
@@ -43,11 +60,12 @@ impl fmt::Display for Container
         {
             match i
             {
-                0 => to_display.push_str(" "),
-                i if i % self.1 == 0 => to_display.push_str(&format!("\n {}", self.0[i])),
+                0 => to_display.push_str(&format!("{}", self.0[i])),
+                i if i % self.1 == 0 => to_display.push_str(&format!("\n{}", self.0[i])),
                 _ => to_display.push_str(&format!("\t{}", self.0[i]))
             }
         }
+		to_display.push_str("\n");
         write!(f, "{}", to_display)
     }
 }
@@ -110,8 +128,9 @@ impl Position
 	}
 
 	#[inline]
-	pub fn possible_moves(&self, size: usize) -> [Move; 4]
+	pub fn possible_moves(&self, size: usize) -> Vec<Move>
 	{
+		vec!
 		[
 			if self.x > 0 { Move::Left(-1) } else { Move::No },
 			if self.x < size - 1 { Move::Right(1) } else { Move::No },
@@ -133,7 +152,7 @@ pub enum Move
 
 impl Move
 {
-	pub fn do_move(&self, map: Map, pos: &Position, size: usize) -> Map
+	pub fn do_move(&self, mut map: Map, pos: &Position, size: usize) -> Map
 	{
 		let pos = pos.as_index(size);
 		let new_pos = (pos as i64 + self.get_offset()) as usize;

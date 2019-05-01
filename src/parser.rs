@@ -1,7 +1,6 @@
 use std::fs;
 
-use crate::goal::{classic, snail, reversed};
-use crate::{Map, Parsed};
+use crate::Container;
 
 // Open an copy the file content into a string
 fn get_file_content(filename: &str) -> Result<String, String>
@@ -83,24 +82,11 @@ fn file_to_map(file: String) -> Result<(usize, Vec<usize>), String>
 	Ok((size, map))
 }
 
-pub fn get_map(filename: &str, goal_mode: &str) -> Result<Parsed, String>
+pub fn get_map(filename: &str) -> Result<Container, String>
 {
     let file = get_file_content(filename)?;
 
 	let (size, start) = file_to_map(file)?;
 
-	// Generate end node depending on style (snail, ascending or descending)
-	let end: Map = match goal_mode
-	{
-		"classic" => classic(size),
-		"reversed" => reversed(size),
-		"snail" | _ => snail(size)
-	};
-
-	if start == end
-	{
-		return Err(format!("The puzzle given is already the solution..."));
-	}
-
-	Ok((start, end, size))
+	Ok(Container(start, size))
 }

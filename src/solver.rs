@@ -1,6 +1,6 @@
-use crate::{Map, Flag};
+use crate::{Map, Move, Flag};
 use crate::heuristic;
-use crate::node::{Node, Move};
+use crate::node::Node;
 use std::time::{Instant};
 
 pub struct Solver

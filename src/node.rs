@@ -75,7 +75,7 @@ impl Node
 		for movement in &possible_moves
 		{
 			if *movement == Move::No { continue }
-			let map = movement.do_move(&self.map.clone(), &self.pos, size);
+			let map = movement.do_move(self.map.clone(), &self.pos, size);
 			let mut node = Node::new(map);
 			node.cost = self.cost.clone();
 			node.pos = self.pos.update(&movement);
@@ -100,7 +100,7 @@ impl Node
 		{
 			let last = solution.path.last().unwrap();
 			if last.movement == Move::No { break }
-			let map = last.movement.opposite().do_move(&last.map.clone(), &last_pos, solver.size);
+			let map = last.movement.opposite().do_move(last.map.clone(), &last_pos, solver.size);
 			let movement = closed_set.remove(&map).unwrap();
 			last_pos = last_pos.update(&last.movement.opposite());
 			solution.path.push(State {map: map, movement: movement });

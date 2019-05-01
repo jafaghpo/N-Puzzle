@@ -1,7 +1,7 @@
 use std::collections::{HashMap};
 use min_max_heap::MinMaxHeap;
-use crate::Map;
-use crate::node::{Node, Move};
+use crate::{Map, Move};
+use crate::node::Node;
 use crate::solver::Solver;
 use indicatif::{ ProgressBar, ProgressStyle };
 use colored::*;

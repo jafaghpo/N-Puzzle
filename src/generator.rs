@@ -2,15 +2,14 @@ extern crate rand;
 
 use rand::thread_rng;
 use rand::seq::SliceRandom;
-use crate::{Map, Move, Position};
+use crate::{Map, Move, Position, Container};
 
 pub struct Generator
 {
 	pub size: usize,
 	pub iter: usize,
 	pub target: String,
-	pub goal: fn(usize) -> Map,
-	pos: Position
+	pub pos: Position
 }
 
 impl Generator
@@ -30,47 +29,57 @@ impl Generator
 			}
 		};
 
-		let str_iter = if let Some(i) = iter { &i.to_string() } else { level };
-		let target = format!("{}/{}_{}_{3}x{3}", dir_path, goal, str_iter, size);
+		let str_iter = if let Some(i) = iter { format!("{}", i) } else { level.to_owned() };
+		let target = format!("{}/{}_{}_{3}x{3}", dir_path, goal, &str_iter, size);
 
 		Generator
 		{
 			size: size,
 			iter: iterations,
 			target: target,
-			pos: Position { x: 0, y: 0 },
-			goal: match goal
-			{
-				"classic" => Generator::classic,
-				"reversed" => Generator::reversed,
-				"snail" | _ => Generator::snail
-			}
+			pos: Position { x: 0, y: 0 }
 		}
 	}
 
-	pub fn shuffle_map(&self, map: Map, pos: Position) -> Map
+	pub fn shuffle_map(&self, mut map: Map, mut pos: Position) -> Map
 	{
 		for _ in 0..self.iter
 		{
-			let moves: Vec<&Move> = pos
+			let moves: Vec<Move> = pos
 				.possible_moves(self.size)
 				.into_iter()
-				.filter(|m| **m != Move::No)
+				.filter(|m| *m != Move::No)
 				.collect();
 
 			let mut rng = thread_rng();
-			let movement = *moves.choose(&mut rng).unwrap();
+			let movement = moves.choose(&mut rng).unwrap();
 			map = movement.do_move(map, &pos, self.size);
+			pos = pos.update(movement);
 		}
 		map
 	}
 
-	pub fn generate_map(&self) -> Result<String, String>
+	pub fn generate_map(&self, goal: &str) -> Result<String, String>
 	{
-		let map = (self.goal)(self.size);
+		let map = Generator::generate_goal(goal, self.size);
 		let index = map.iter().position(|&x| x == 0).unwrap();
 		let pos = Position { x: index % self.size, y: index / self.size };
 		let map = self.shuffle_map(map, pos);
+		if let Err(e) = Container(map, self.size).create_file(&self.target)
+		{
+			return Err(e);
+		}
+		Ok(self.target.clone())
+	}
+
+	pub fn generate_goal(goal: &str, size: usize) -> Map
+	{
+		match goal
+		{
+			"classic" => Generator::classic(size),
+			"reversed" => Generator::reversed(size),
+			"snail" | _ => Generator::snail(size),
+		}
 	}
 
 	pub fn classic(size: usize) -> Map

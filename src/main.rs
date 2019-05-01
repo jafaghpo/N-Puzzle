@@ -1,16 +1,13 @@
 use std::process::exit;
-use std::fs::File;
-use std::io::prelude::*;
 use colored::*;
 use clap::{App, load_yaml};
 use std::time::{Instant};
 
-use npuzzle::{Flag, Args, Parsed};
+use npuzzle::{Flag, Args, Container};
 use npuzzle::solver::Solver;
+use npuzzle::generator::Generator;
 use npuzzle::parser;
 use npuzzle::algorithm;
-use npuzzle::goal::{classic, snail, reversed};
-use npuzzle::generator::{generate_puzzle, get_iterations, puzzle_to_str};
 
 // Display error message on standard error and exit program
 fn exit_program(message: &str)
@@ -19,72 +16,32 @@ fn exit_program(message: &str)
 	exit(1);
 }
 
-fn create_generated_puzzle(dirpath: &str, size: &str, level: &str, end_mode: &str) -> Result<String, String>
+fn parse_number(number: &str) -> Result<usize, String>
 {
-	fn parse_number(number: &str) -> Result<usize, String>
+	match number.parse()
 	{
-		match number.parse()
-		{
-			Ok(n) => Ok(n),
-			Err(_) => Err(format!("'{}' must be a valid number", number))
-		}
+		Ok(n) => Ok(n),
+		Err(_) => Err(format!("'{}' must be a valid number", number))
 	}
-
-	fn create_file(filepath: &str, puzzle: Vec<usize>, size: usize) -> Result<(), String>
-	{
-		let mut file = match File::create(filepath)
-		{
-			Ok(f) => Ok(f),
-			Err(e) => Err(e.to_string())
-		}?;
-
-		if let Err(e) = file.write_all(puzzle_to_str(puzzle, size).as_bytes())
-		{
-			return Err(e.to_string())
-		};
-		Ok(())
-	}
-
-	let mode = match end_mode 
-	{
-		"classic" => classic,
-		"reversed" => reversed,
-		"snail" | _ => snail
-	};
-
-	let size = parse_number(size)?;
-
-	let puzzle = match level
-	{
-		"easy" | "normal" | "hard" | "epic" => generate_puzzle(size, get_iterations(level), mode),
-		_ => generate_puzzle(size, parse_number(level)?, mode)
-	};
-
-	let filepath = match level
-	{
-		"easy" | "normal" | "hard" => format!("{}/{}_{}_{3}x{3}", dirpath, end_mode, level, size),
-		iter => format!("{}/{}_{}_{3}x{3}", dirpath, end_mode, iter, size)
-	};
-
-	create_file(&filepath, puzzle, size)?;
-	Ok(filepath)
 }
 
 fn run_program(args: Args, time: Instant) -> Result<(), String>
 {
-	let file: String = if args.g_size == "None" { args.file } else
+	let file = if args.g_size == "None" { args.file } else
 	{
-		match args.iter
+		let g_size = parse_number(&args.g_size)?;
+		let iter = match args.iter
 		{
-			Some(iter) => create_generated_puzzle(&args.file, &args.g_size, &iter, &args.goal),
-			None => create_generated_puzzle(&args.file, &args.g_size, &args.level, &args.goal),
-		}?
+			Some(i) => Some(parse_number(&i)?),
+			None => None
+		};
+		let generator = Generator::new(g_size, iter, &args.level, &args.goal, &args.file);
+		generator.generate_map(&args.goal)?
 	};
 
-	// Get start map, end map & map size inside parsed
-	let parsed: Parsed = parser::get_map(&file, &args.goal)?;
-	let (start, end, size) = parsed;
-
+	// Get start map & size inside Container
+	let Container(start, size) = parser::get_map(&file)?;
+	let end = Generator::generate_goal(&args.goal, size);
 	let solver = Solver::new(end, size, &args.heuristic, args.flag, time);
 	solver.is_solvable(&start)?;
 
@@ -125,5 +82,4 @@ fn main()
 	{
 		exit_program(message);
 	}
-	
 }

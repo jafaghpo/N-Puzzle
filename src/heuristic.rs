@@ -1,4 +1,5 @@
-use crate::types::{Map, Node};
+use crate::Map;
+use crate::node::Node;
 use std::collections::HashSet;
 
 #[inline]
@@ -9,8 +10,6 @@ fn distance(a: usize, b: usize, n: usize) -> usize
 	x + y
 }
 
-// Returns the sum of distance between the start position and the end position of each tiles
-// The empty tile is ignored if we want the heuristic to be admissible
 #[inline]
 pub fn manhattan(mut node: Node, end: &Map, size: usize) -> Node
 {
@@ -295,7 +294,6 @@ pub fn linear_conflict(mut node: Node, end: &Map, size: usize) -> Node
 
 pub fn partial_conflict(mut node: Node, end: &Map, size: usize) -> Node
 {
-	node = partial_manhattan(node, end, size);
 	let index = node.pos.moved_element(&node.movement).as_index(size);
 	let id = node.map[index];
 
@@ -321,6 +319,7 @@ pub fn partial_conflict(mut node: Node, end: &Map, size: usize) -> Node
 	// Remove cost of old conflicts
 	for pair in &prev_list
 	{
+		// print!("({},{})", pair.0, pair.1);
 		node.cost[pair.0] -= 1;
 		node.cost[pair.1] -= 1;
 	}
@@ -331,6 +330,7 @@ pub fn partial_conflict(mut node: Node, end: &Map, size: usize) -> Node
 		node.cost[pair.0] += 1;
 		node.cost[pair.1] += 1;
 	}
+	node = partial_manhattan(node, end, size);
 	node.h = (node.h as i32 + 2 * (list.len() as i32 - prev_list.len() as i32)) as usize;
 	node
 }
@@ -338,7 +338,8 @@ pub fn partial_conflict(mut node: Node, end: &Map, size: usize) -> Node
 #[cfg(test)]
 mod tests
 {
-    use crate::types::{Map, Node};
+    use crate::Map;
+	use crate::node::Node;
 
 	#[test]
 	fn distance()

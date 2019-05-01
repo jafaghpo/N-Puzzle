@@ -1,7 +1,7 @@
 use std::fs;
-use crate::checker;
-use crate::goal_generator::{classic, snail, reversed};
-use crate::types::{Map, Parsed};
+
+use crate::goal::{classic, snail, reversed};
+use crate::{Map, Parsed};
 
 // Open an copy the file content into a string
 fn get_file_content(filename: &str) -> Result<String, String>
@@ -96,11 +96,6 @@ pub fn get_map(filename: &str, goal_mode: &str) -> Result<Parsed, String>
 		"reversed" => reversed(size),
 		"snail" | _ => snail(size)
 	};
-
-	if checker::is_solvable(&start, &end, size) == false
-	{
-		return Err(format!("unsolvable puzzle"));
-	}
 
 	if start == end
 	{

@@ -1,9 +1,10 @@
 use std::collections::{HashMap};
 use min_max_heap::MinMaxHeap;
-use crate::types::{Flag, Map, Node, Solver, Move};
+use crate::Map;
+use crate::node::{Node, Move};
+use crate::solver::Solver;
 use indicatif::{ ProgressBar, ProgressStyle };
 use colored::*;
-use std::time::{Instant};
 
 fn display_map(map: &Map, size: usize)
 {
@@ -44,7 +45,7 @@ fn debug_child(node: &Node, index: usize)
 	println!("");
 }
 
-pub fn solve(start: Map, size: usize, solver: Solver, flag: &Flag, start_time: Instant)
+pub fn solve(start: Map, size: usize, solver: Solver)
 {
 	let mut start = Node::new(start);
 	start.find_position(size);
@@ -68,7 +69,7 @@ pub fn solve(start: Map, size: usize, solver: Solver, flag: &Flag, start_time: I
 		// Get the node with the lowest f cost
 		let current = open_set.pop_max().unwrap();
 
-		if flag.debug
+		if solver.flag.debug
 		{
 			debug_parent(&current, _debug_parent, size, &open_set, &closed_set);
 			_debug_parent += 1;
@@ -79,7 +80,7 @@ pub fn solve(start: Map, size: usize, solver: Solver, flag: &Flag, start_time: I
 
 		// Add the current node to the closed set
 
-		if flag.debug == false && current.h < best_h
+		if solver.flag.debug == false && current.h < best_h
 		{
 			info.set_position(i as u64);
 			i += (best_h - current.h) as f32;
@@ -98,7 +99,7 @@ pub fn solve(start: Map, size: usize, solver: Solver, flag: &Flag, start_time: I
 			let end_node = current.clone();
 			closed_set.insert(current.map, current.movement.clone());
 			info.finish();
-			break end_node.get_solution(solver.goal, size, &open_set, &closed_set, &flag, start_time)
+			break end_node.get_solution(solver, open_set, closed_set)
 		}
 		else
 		{
@@ -111,7 +112,7 @@ pub fn solve(start: Map, size: usize, solver: Solver, flag: &Flag, start_time: I
 			if closed_set.contains_key(&node.map) { continue }
 			node = solver.update_cost(node);
 
-			if flag.debug
+			if solver.flag.debug
 			{
 				debug_child(&node, _debug_child);
 				_debug_child += 1;

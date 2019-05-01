@@ -1,23 +1,21 @@
-extern crate colored;
-
-use clap::{App, load_yaml};
 use std::process::exit;
 use std::fs::File;
 use std::io::prelude::*;
 use colored::*;
+use clap::{App, load_yaml};
 use std::time::{Instant};
 
-use npuzzle_lib::*;
-use types::{Flag, Map, Solver, Parsed};
-use parser;
-use algorithm;
-use goal_generator::{classic, snail, reversed};
-use puzzle_generator::{generate_puzzle, get_iterations, puzzle_to_str};
+use npuzzle::{Flag, Args, Parsed};
+use npuzzle::solver::Solver;
+use npuzzle::parser;
+use npuzzle::algorithm;
+use npuzzle::goal::{classic, snail, reversed};
+use npuzzle::generator::{generate_puzzle, get_iterations, puzzle_to_str};
 
 // Display error message on standard error and exit program
 fn exit_program(message: &str)
 {
-	eprintln!("error: {}", message.red());
+	eprintln!("Error: {}", message.red());
 	exit(1);
 }
 
@@ -72,56 +70,60 @@ fn create_generated_puzzle(dirpath: &str, size: &str, level: &str, end_mode: &st
 	Ok(filepath)
 }
 
-// Swap indexes of a vector with their respective values
-pub fn swap_indexes(vec: &Map) -> Map
+fn run_program(args: Args, time: Instant) -> Result<(), String>
 {
-	vec
-		.iter()
-		.enumerate()
-		.fold(vec![0; vec.len()], | mut acc, (i, x) | { acc[*x] = i; acc } )
+	let file: String = if args.g_size == "None" { args.file } else
+	{
+		match args.iter
+		{
+			Some(iter) => create_generated_puzzle(&args.file, &args.g_size, &iter, &args.goal),
+			None => create_generated_puzzle(&args.file, &args.g_size, &args.level, &args.goal),
+		}?
+	};
+
+	// Get start map, end map & map size inside parsed
+	let parsed: Parsed = parser::get_map(&file, &args.goal)?;
+	let (start, end, size) = parsed;
+
+	let solver = Solver::new(end, size, &args.heuristic, args.flag, time);
+	solver.is_solvable(&start)?;
+
+	algorithm::solve(start, size, solver);
+	Ok(())
 }
 
 fn main()
 {
-	let start_time = Instant::now();
+	let time = Instant::now();
 	// Read syntax from cli.yml (Command Line Interpretor)
 	// parse the command line arguments and return the matches
 	let yaml = load_yaml!("cli.yml");
 	let matches = App::from_yaml(yaml).get_matches();
-	let filename = matches.value_of("file").unwrap();
-	let end_mode = matches.value_of("end_mode").unwrap();
-	let generator_size = matches.value_of("generator").unwrap();
-	let level = matches.value_of("level").unwrap();
-	let iterations = matches.value_of("iterations");
-	let heuristic = matches.value_of("heuristic_function").unwrap();
 	let algo = matches.value_of("algorithm").unwrap();
 
-	let file = if generator_size == "None" { filename.to_owned() } else
+	let args = Args
 	{
-		let result = match iterations
+		file: matches.value_of("file").unwrap().to_owned(),
+		goal: matches.value_of("end_mode").unwrap().to_owned(),
+		g_size: matches.value_of("generator").unwrap().to_owned(),
+		level: matches.value_of("level").unwrap().to_owned(),
+		iter: match matches.value_of("iterations")
 		{
-			Some(iter) => create_generated_puzzle(filename, generator_size, iter, end_mode),
-			None => create_generated_puzzle(filename, generator_size, level, end_mode),
-		};
-		match result
+			Some(i) => Some(i.to_owned()),
+			None => None
+		},
+		heuristic: matches.value_of("heuristic_function").unwrap().to_owned(),
+		flag: Flag
 		{
-			Ok(res) => res,
-			Err(e) => { exit_program(&e); String::new() }
+			verbosity: matches.is_present("verbosity"),
+			debug: matches.is_present("debug"),
+			greedy: algo == "greedy",
+			uniform: algo == "uniform"
 		}
 	};
-
-	// Get start map, end map & map size inside parsed
-	let parsed: Result<Parsed, String> = parser::get_map(&file, end_mode);
-	if let Err(e) = &parsed { exit_program(&e) }
-	let (start, end, size) = parsed.unwrap();
-
-	let solver = Solver::new(swap_indexes(&end), end, size, heuristic, algo);
-	let flag = Flag
+	if let Err(ref message) = run_program(args, time)
 	{
-		display_bar: if solver.uniform { false } else { matches.is_present("bar") },
-		verbosity: matches.is_present("verbosity"),
-		debug: matches.is_present("debug")
-	};
-
-	algorithm::solve(start, size, solver, &flag, start_time);
+		exit_program(message);
+	}
+	
 }

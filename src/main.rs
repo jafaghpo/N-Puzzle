@@ -42,6 +42,7 @@ fn run_program(args: Args, time: Instant) -> Result<(), String>
 	// Get start map & size inside Container
 	let Container(start, size) = parser::get_map(&file)?;
 	let end = Generator::generate_goal(&args.goal, size);
+	if start == end { return Err("the puzzle is already solved...".to_owned()) }
 	let solver = Solver::new(end, size, &args.heuristic, args.flag, time);
 	solver.is_solvable(&start)?;
 

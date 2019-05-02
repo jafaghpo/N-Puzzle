@@ -39,7 +39,7 @@ pub fn astar(start: Map, solver: Solver)
 			let end_pos = current.pos.clone();
 			let end_move = current.movement.clone();
 			closed_set.insert(current.map, current.movement.clone());
-			info.bar.unwrap().finish();
+			if solver.flag.debug == false { info.bar.unwrap().finish() }
 			break (end_pos, end_move)
 		}
 		else

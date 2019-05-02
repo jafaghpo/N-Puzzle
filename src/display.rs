@@ -1,6 +1,7 @@
-use indicatif::{ ProgressBar, ProgressStyle };
+use indicatif::{ProgressBar, ProgressStyle};
 use colored::*;
 use std::collections::{HashMap, BinaryHeap};
+use std::time::Instant;
 
 use crate::node::Node;
 use crate::{Container, Map, Move};
@@ -82,5 +83,52 @@ impl Debug
         println!("   Position: x({}) y({})", node.pos.x, node.pos.y);
         println!("   Move: {:?}\n", node.movement);
         self.child_count += 1;
+    }
+}
+
+pub struct State
+{
+	pub map: Map,
+	pub movement: Move
+}
+
+pub struct Solution
+{
+	pub path: Vec<State>,
+	pub moves: usize,
+	pub selected: usize,
+	pub pending: usize,
+	pub total: usize
+}
+
+impl Solution
+{
+	pub fn new(open_size: usize, closed_size: usize) -> Self
+	{
+		Self
+		{
+			path: vec![],
+			moves: 0,
+			pending: open_size,
+			selected: closed_size,
+			total: open_size + closed_size
+		}
+	}
+
+    pub fn display_all(&mut self, size: usize, verbosity: bool, time: Instant)
+    {
+        if verbosity == true
+        {
+            while let Some(state) = self.path.pop()
+            {
+                println!("[{}]", state.movement);
+                println!("{}", Container(state.map, size));
+            }
+            println!("Number of pending states (open set): {}", self.pending.to_string().green());
+            println!("Number of selected states (closed set): {}", self.selected.to_string().red());
+            println!("Number of states ever represented in memory: {}", self.total.to_string().cyan());
+        }
+        println!("Number of moves: {}", self.moves.to_string().yellow());
+        println!("Execution time: {}", &format!("{:?}", time.elapsed()).bright_blue().bold());
     }
 }

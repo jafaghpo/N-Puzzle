@@ -2,7 +2,7 @@ use std::collections::{HashMap, BinaryHeap};
 use crate::{Map, Move};
 use crate::node::Node;
 use crate::solver::Solver;
-use crate::display::{Info, Debug};
+use crate::display::{Info, Debug, Solution, State};
 
 pub fn astar(start: Map, solver: Solver)
 {
@@ -18,7 +18,7 @@ pub fn astar(start: Map, solver: Solver)
 
 	open_set.push(start);
 
-	loop
+	let (mut last_pos, last_move) = loop
 	{
 		// Get the node with the lowest f cost
 		let mut current = open_set.pop().unwrap();
@@ -36,10 +36,11 @@ pub fn astar(start: Map, solver: Solver)
 		// If the solution is found
 		if current.h == 0
 		{
-			let end_node = current.clone();
+			let end_pos = current.pos.clone();
+			let end_move = current.movement.clone();
 			closed_set.insert(current.map, current.movement.clone());
 			info.bar.unwrap().finish();
-			break end_node.get_solution(solver, open_set, closed_set)
+			break (end_pos, end_move)
 		}
 		else
 		{
@@ -56,5 +57,19 @@ pub fn astar(start: Map, solver: Solver)
 
 			open_set.push(node);
 		}
+	};
+
+	let mut solution = Solution::new(open_set.len(), closed_set.len());
+	solution.path = vec![State { map: solver.goal, movement: last_move }];
+	loop
+	{
+		let last = solution.path.last().unwrap();
+		if last.movement == Move::No { break }
+		let map = last.movement.opposite().do_move(last.map.clone(), &last_pos, solver.size);
+		let movement = closed_set.remove(&map).unwrap();
+		last_pos = last_pos.update(&last.movement.opposite());
+		solution.path.push(State {map: map, movement: movement });
 	}
+	solution.moves = solution.path.len() - 1;
+	solution.display_all(solver.size, solver.flag.verbosity, solver.time);
 }

@@ -52,7 +52,7 @@ impl fmt::Display for Container
             {
                 0 => to_display.push_str(&format!("{}", self.0[i])),
                 i if i % self.1 == 0 => to_display.push_str(&format!("\n{}", self.0[i])),
-                _ => to_display.push_str(&format!("\t{}", self.0[i]))
+                _ => to_display.push_str(&format!("   {}", self.0[i]))
             }
         }
 		to_display.push_str("\n");
@@ -172,4 +172,21 @@ impl Move
 			Move::No => Move::No
 		}
 	}
+}
+
+impl fmt::Display for Move
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result
+    {
+        let mut to_display = String::new();
+        match self
+		{
+			Move::Left(_) => to_display.push_str("Left"),
+			Move::Right(_) => to_display.push_str("Right"),
+			Move::Up(_) => to_display.push_str("Up"),
+			Move::Down(_) => to_display.push_str("Down"),
+			Move::No => to_display.push_str("Start State"),
+		};
+        write!(f, "{}", to_display)
+    }
 }

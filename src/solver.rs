@@ -1,4 +1,4 @@
-use crate::{Map, Move, Flag, Container};
+use crate::{Map, Flag, Container};
 use crate::heuristic;
 use crate::node::Node;
 use std::time::{Instant};
@@ -128,36 +128,5 @@ impl Solver
 			false => { node.f = node.h + node.g; node.t = node.h }
 		};
 		node
-	}
-}
-
-
-pub struct State
-{
-	pub map: Map,
-	pub movement: Move
-}
-
-pub struct Solution
-{
-	pub path: Vec<State>,
-	pub moves: usize,
-	pub selected: usize,
-	pub pending: usize,
-	pub total: usize,
-}
-
-impl Solution
-{
-	pub fn new() -> Self
-	{
-		Self
-		{
-			path: vec![],
-			moves: 0,
-			pending: 0,
-			selected: 0,
-			total: 0
-		}
 	}
 }

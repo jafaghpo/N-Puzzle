@@ -37,17 +37,22 @@ impl Info
             self.bar = Some(bar);
         }
 
-        let bar = self.bar.clone().unwrap();
-
-        bar.set_position(self.count as u64);
-        self.count += (self.min_h - current_h) as f32;
-        let percent = self.count / (self.max_h as f32) * 100.0;
-        bar.set_message(&format!("{} | open states: {} | closed states: {} | total states: {}",
-            &format!("{:.2}%", percent).magenta(),
-            open_size.to_string().green(),
-            closed_size.to_string().red(),
-            (open_size + closed_size).to_string().cyan()));
-        self.min_h = current_h;
+        match self.bar
+        {
+            Some(ref bar) =>
+            {
+                bar.set_position(self.count as u64);
+                self.count += (self.min_h - current_h) as f32;
+                let percent = self.count / (self.max_h as f32) * 100.0;
+                bar.set_message(&format!("{} | open states: {} | closed states: {} | total states: {}",
+                    &format!("{:.2}%", percent).magenta(),
+                    open_size.to_string().green(),
+                    closed_size.to_string().red(),
+                    (open_size + closed_size).to_string().cyan()));
+                self.min_h = current_h;
+            },
+            None => ()
+        };
     }
 }
 

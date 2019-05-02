@@ -70,7 +70,6 @@ impl PartialOrd for Node
 {
     fn partial_cmp(&self, other: &Node) -> Option<Ordering>
 	{
-		// Some(other.f.cmp(&self.f))
 		Some(other.f.cmp(&self.f).then(other.t.cmp(&self.t)))
     }
 }

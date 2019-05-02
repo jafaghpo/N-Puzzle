@@ -3,11 +3,24 @@ use colored::*;
 use clap::{App, load_yaml};
 use std::time::{Instant};
 
-use npuzzle::{Flag, Args, Container};
+use npuzzle::{Flag, Container};
 use npuzzle::solver::Solver;
 use npuzzle::generator::Generator;
 use npuzzle::parser;
 use npuzzle::algorithm;
+
+struct Args
+{
+	pub file: String,
+	pub goal: String,
+	pub g_size: String,
+	pub level: String,
+	pub iter: Option<String>,
+	pub algo: String,
+	pub heuristic: String,
+	pub solvable: bool,
+	pub flag: Flag
+}
 
 // Display error message on standard error and exit program
 fn exit_program(message: &str)
@@ -35,8 +48,8 @@ fn run_program(args: Args, time: Instant) -> Result<(), String>
 			Some(i) => Some(parse_number(&i)?),
 			None => None
 		};
-		let generator = Generator::new(g_size, iter, &args.level, &args.goal, &args.file);
-		generator.generate_map(&args.goal)?
+		let mut generator = Generator::new(g_size, iter, &args.level, &args.goal, &args.file);
+		generator.generate_map(&args.goal, args.solvable)?
 	};
 
 	// Get start map & size inside Container
@@ -46,7 +59,12 @@ fn run_program(args: Args, time: Instant) -> Result<(), String>
 	let solver = Solver::new(end, size, &args.heuristic, args.flag, time);
 	solver.is_solvable(&start)?;
 
-	algorithm::solve(start, size, solver);
+	match args.algo.as_ref()
+	{
+		"IDA*" => algorithm::astar(start, solver),
+		"A*" | _ => algorithm::astar(start, solver)
+	}
+	
 	Ok(())
 }
 
@@ -57,7 +75,6 @@ fn main()
 	// parse the command line arguments and return the matches
 	let yaml = load_yaml!("cli.yml");
 	let matches = App::from_yaml(yaml).get_matches();
-	let algo = matches.value_of("algorithm").unwrap();
 
 	let args = Args
 	{
@@ -70,13 +87,15 @@ fn main()
 			Some(i) => Some(i.to_owned()),
 			None => None
 		},
+		solvable: matches.value_of("solvability").unwrap() == "solvable",
+		algo: matches.value_of("algorithm").unwrap().to_owned(),
 		heuristic: matches.value_of("heuristic_function").unwrap().to_owned(),
 		flag: Flag
 		{
 			verbosity: matches.is_present("verbosity"),
 			debug: matches.is_present("debug"),
-			greedy: algo == "greedy",
-			uniform: algo == "uniform"
+			greedy: matches.is_present("greedy"),
+			uniform: matches.is_present("uniform")
 		}
 	};
 	if let Err(ref message) = run_program(args, time)

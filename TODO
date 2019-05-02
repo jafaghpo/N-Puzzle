@@ -12,14 +12,10 @@ Tasks (in order):
 [X] Create close set as a hash map (see Optimization section)
 [X] Create A* algo with its variants (weighted, greedy, uniform cost)
 [X] Create function(s) to print solution (complexity of time & memory, number of moves, each state of final path, exec time)
-[?] Decide to use either async with tokio crate (if possible) or multithreading with crossbeam / rayon crate
-[ ] Create a feature to estimate npuzzle time with a multivariate regression model.
+[ ] Add IDA* algorithm
+[-] (Canceled) Decide to use either async with tokio crate (if possible) or multithreading with crossbeam / rayon crate
+[-] (Canceled) Create a feature to estimate npuzzle time with a multivariate regression model.
 	Model features:
 		- heuristic value of start node
 		- type of heuristic mapped from 0 to 3 (misplaced: 0, axes: 1, manhattan: 2, conflict: 3)
 		- type of algorithm (uniform: 0, memory limited A*: 1, standard A*: 2, greedy: 3)
-
-Optimizations:
-(MT) tag stands for MultiThreading. Every optimizations with (MT) tag will run at the same time and wait for each other
-
-- (MT) Run heuristic function on state of possible moves at the same time with multithreading

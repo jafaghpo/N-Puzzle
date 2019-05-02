@@ -1,5 +1,4 @@
-use min_max_heap::MinMaxHeap;
-use std::collections::HashMap;
+use std::collections::{HashMap, BinaryHeap};
 use colored::Colorize;
 use std::cmp::Ordering;
 use crate::{Map, Move, Position};
@@ -87,7 +86,7 @@ impl Node
 		moves
 	}
 
-	pub fn get_solution(self, solver: Solver, open_set: MinMaxHeap<Node>, mut closed_set: HashMap<Map, Move>)
+	pub fn get_solution(self, solver: Solver, open_set: BinaryHeap<Node>, mut closed_set: HashMap<Map, Move>)
 	{
 		let mut solution = Solution::new();
 		solution.selected = closed_set.len();
@@ -130,6 +129,7 @@ impl PartialOrd for Node
 {
     fn partial_cmp(&self, other: &Node) -> Option<Ordering>
 	{
-		Some(other.f.cmp(&self.f).then(other.t.cmp(&self.t)))
+		Some(other.f.cmp(&self.f))
+		// Some(other.f.cmp(&self.f).then(other.t.cmp(&self.t)))
     }
 }

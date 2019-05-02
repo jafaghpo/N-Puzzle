@@ -1,4 +1,4 @@
-use crate::{Map, Move, Flag};
+use crate::{Map, Move, Flag, Container};
 use crate::heuristic;
 use crate::node::Node;
 use std::time::{Instant};
@@ -23,17 +23,17 @@ impl Solver
 		let update_cost: fn(Node, &Map, usize) -> Node;
 		match name
 		{
-			"misplaced_tiles" => 
+			"misplaced" => 
 			{
 				first_cost = heuristic::misplaced_tiles;
 				update_cost = heuristic::partial_misplaced;
 			}
-			"out_of_axes" =>
+			"axes" =>
 			{
 				first_cost = heuristic::out_of_axes;
 				update_cost = heuristic::partial_out_of_axes;
 			}
-			"linear_conflict" =>
+			"conflict" =>
 			{
 				first_cost = heuristic::linear_conflict;
 				update_cost = heuristic::partial_conflict;
@@ -44,11 +44,12 @@ impl Solver
 				update_cost = heuristic::partial_manhattan;
 			}
 		}
+		let container = Container(goal, size);
 
 		Self
 		{
-			end: Solver::swap_indexes(&goal),
-			goal: goal,
+			end: container.swap_indexes(),
+			goal: container.0,
 			size: size,
 			first_cost: first_cost,
 			update_cost: update_cost,
@@ -93,15 +94,6 @@ impl Solver
 			true => Ok(()),
 			false => Err("unsolvable puzzle".to_owned())
 		}
-	}
-
-	// Swap indexes of a vector with their respective values
-	pub fn swap_indexes(vec: &Map) -> Map
-	{
-		vec
-			.iter()
-			.enumerate()
-			.fold(vec![0; vec.len()], | mut acc, (i, x) | { acc[*x] = i; acc } )
 	}
 
 	pub fn get_cost(&self, mut node: Node) -> Node

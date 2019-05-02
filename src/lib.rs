@@ -8,17 +8,7 @@ pub mod parser;
 pub mod algorithm;
 pub mod heuristic;
 pub mod generator;
-
-pub struct Args
-{
-	pub file: String,
-	pub goal: String,
-	pub g_size: String,
-	pub level: String,
-	pub iter: Option<String>,
-	pub heuristic: String,
-	pub flag: Flag
-}
+pub mod display;
 
 pub type Map = Vec<usize>;
 

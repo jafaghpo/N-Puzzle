@@ -1,5 +1,5 @@
 name: N-Puzzle
-version: "0.1"
+version: "1.0.0"
 author: John Afaghpour <jafaghpo@student.42.com> and Guillaume Gregoire <ggregoir@student.42.fr>
 about: Implementation of the fifteen-puzzle game with variable puzzle length and configurable algorithms & heuristics
 args:
@@ -7,6 +7,8 @@ args:
         help: Path to file containing the starting state of the puzzle or path to folder where the generated puzzle is created (only with -g flag)
         required: true
         index: 1
+        value_names:
+            - path
     - end_mode:
         help: Style of the ending state
         short: e
@@ -16,43 +18,57 @@ args:
             - classic
             - reversed
         default_value: snail
+        value_names:
+            - style
     - algorithm:
         help: Algorithms used to solve the puzzle.
         short: a
         long: algo
         possible_values:
-            - standard
-            - greedy
-            - uniform
-        default_value: standard
+            - A*
+            - IDA*
+        default_value: A*
+        value_names:
+            - type
     - heuristic_function:
         help: Heuristic used to solve the puzzle.
         short: h
         long: heuristic
         possible_values:
-            - misplaced_tiles
+            - misplaced
             - manhattan
-            - linear_conflict
-            - out_of_axes
+            - conflict
+            - axes
         default_value: manhattan
+        value_names:
+            - type
+
+    # flags
+    - uniform:
+        help: Configure f cost to be equal to g cost (brute force algorithm)
+        short: u
+        long: uniform
+    - greedy:
+        help: Configure f cost to be equal to h cost (greedy algorithm)
+        short: g
+        long: greedy
     - verbosity:
         help: Display more informations on the solution
         short: -v
         long: verbosity
-    - bar:
-        help: Display a progress bar during search
-        short: -b
-        long: bar
     - debug:
         help: Show live information of nodes
         short: -d
         long: debug
+
     # puzzle generator args
     - generator:
         help: Generate random puzzle of given size
         long: generator
-        short: g
+        short: G
         default_value: None
+        value_names:
+            - size
     - level:
         requires:
             - generator
@@ -68,9 +84,17 @@ args:
     - iterations:
         requires:
             - generator
-        help: Set number of swaps for generated puzzle
+        help: Set number of iterations/swaps for generated puzzle
         short: -i
         long: iterations
         value_names:
-            - iterations
+            - number
+    - solvability:
+        requires:
+            - generator
+        help: Decide if the generated puzzle should be solvable or unsolvable (only with -g flag)
+        possible_values:
+            - "solvable"
+            - "unsolvable"
+        default_value: "solvable"
 

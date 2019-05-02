@@ -30,7 +30,7 @@ impl Generator
 		};
 
 		let str_iter = if let Some(i) = iter { format!("{}", i) } else { level.to_owned() };
-		let target = format!("{}/{}_{}_{3}x{3}", dir_path, goal, &str_iter, size);
+		let target = format!("{}/{}_{3}x{3}_{}", dir_path, goal, &str_iter, size);
 
 		Generator
 		{
@@ -41,7 +41,7 @@ impl Generator
 		}
 	}
 
-	pub fn shuffle_map(&self, mut map: Map, mut pos: Position) -> Map
+	pub fn shuffle_map(&mut self, mut map: Map, mut pos: Position) -> Map
 	{
 		for _ in 0..self.iter
 		{
@@ -56,15 +56,39 @@ impl Generator
 			map = movement.do_move(map, &pos, self.size);
 			pos = pos.update(movement);
 		}
+		self.pos = pos;
 		map
 	}
 
-	pub fn generate_map(&self, goal: &str) -> Result<String, String>
+	pub fn get_unsolvable(&self, mut map: Map) -> Map
+	{
+		// Swap the first two tiles if empty is not there
+		if self.pos.x > 1 || self.pos.y > 0
+		{
+			let tmp = map[0];
+			map[0] = map[1];
+			map[1] = tmp;
+		}
+		else // Swap the last two tiles
+		{
+			let last_index = map.len() - 1;
+			let tmp = map[last_index];
+			map[last_index] = map[last_index - 1];
+			map[last_index - 1] = tmp;
+		}
+		map
+	}
+
+	pub fn generate_map(&mut self, goal: &str, solvable: bool) -> Result<String, String>
 	{
 		let map = Generator::generate_goal(goal, self.size);
 		let index = map.iter().position(|&x| x == 0).unwrap();
 		let pos = Position { x: index % self.size, y: index / self.size };
-		let map = self.shuffle_map(map, pos);
+		let mut map = self.shuffle_map(map, pos);
+		if solvable == false
+		{
+			map = self.get_unsolvable(map);
+		}
 		if let Err(e) = Container(map, self.size).create_file(&self.target)
 		{
 			return Err(e);

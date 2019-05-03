@@ -26,6 +26,8 @@ args:
         long: algo
         possible_values:
             - A*
+            - IA*
+            - GA*
             - IDA*
         default_value: A*
         value_names:

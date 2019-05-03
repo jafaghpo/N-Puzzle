@@ -8,10 +8,12 @@ pub struct Node
 	pub cost: Map,
 	pub pos: Position,
 	pub movement: Move,
+	pub depth: usize,
 	pub h: usize,
 	pub g: usize,
 	pub f: usize,
-	pub t: usize
+	pub t: usize,
+	pub move_list: Vec<Move>,
 }
 
 impl Node
@@ -24,6 +26,8 @@ impl Node
 			map: map,
 			pos: Position { x: 0, y: 0 },
 			movement: Move::No,
+			move_list: vec![],
+			depth: 0,
 			f: 0,
 			g: 0,
 			h: 0,

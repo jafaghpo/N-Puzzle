@@ -80,7 +80,6 @@ impl Solver
 
 		let mut start_inv = get_inversions(start);
 		let mut end_inv = get_inversions(&self.goal);
-
 		// If the size is even, we take into account the position of the empty tile
 		if self.size % 2 == 0
 		{

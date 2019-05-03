@@ -4,7 +4,7 @@ use crate::node::Node;
 use crate::solver::Solver;
 use crate::display::{Info, Debug, Solution, State};
 
-pub fn astar(start: Map, solver: Solver)
+pub fn solve(start: Map, solver: Solver) -> Result<(), String>
 {
 	let mut start = Node::new(start);
 	start.find_position(solver.size);
@@ -23,15 +23,8 @@ pub fn astar(start: Map, solver: Solver)
 		// Get the node with the lowest f cost
 		let mut current = open_set.pop().unwrap();
 
-		if solver.flag.debug { current = debug.parent(current, solver.size, &open_set, &closed_set) }
-
-		// Get the list of possible moves
-		let moves: Vec<Node> = current.generate_moves(solver.size);
-
-		if solver.flag.debug == false && current.h < info.min_h
-		{
-			info.update(current.h, open_set.len(), closed_set.len());
-		}
+		if solver.flag.debug { current = debug.parent(current, solver.size, open_set.len(), closed_set.len()) }
+		else if current.h < info.min_h { info.update(current.h, open_set.len(), closed_set.len()) }
 
 		// If the solution is found
 		if current.h == 0
@@ -42,10 +35,11 @@ pub fn astar(start: Map, solver: Solver)
 			if solver.flag.debug == false { info.bar.unwrap().finish() }
 			break (end_pos, end_move)
 		}
-		else
-		{
-			closed_set.insert(current.map, current.movement.clone());
-		}
+
+		// Get the list of possible moves
+		let moves: Vec<Node> = current.generate_moves(solver.size);
+
+		closed_set.insert(current.map, current.movement.clone());
 
 		// Get the costs of child nodes and push them in the open set
 		for mut node in moves
@@ -72,4 +66,5 @@ pub fn astar(start: Map, solver: Solver)
 	}
 	solution.moves = solution.path.len() - 1;
 	solution.display_all(solver.size, solver.flag.verbosity, solver.time);
+	Ok(())
 }

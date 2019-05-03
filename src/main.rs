@@ -7,7 +7,7 @@ use npuzzle::{Flag, Container};
 use npuzzle::solver::Solver;
 use npuzzle::generator::Generator;
 use npuzzle::parser;
-use npuzzle::algorithm;
+use npuzzle::{astar, astar_iterative, astar_genetic};
 
 struct Args
 {
@@ -61,11 +61,11 @@ fn run_program(args: Args, time: Instant) -> Result<(), String>
 
 	match args.algo.as_ref()
 	{
-		"IDA*" => algorithm::astar(start, solver),
-		"A*" | _ => algorithm::astar(start, solver)
+		"IDA*" => astar_iterative::solve(start, solver),
+		"IA*" => astar_iterative::solve(start, solver),
+		"GA*" => astar_genetic::solve(start, solver),
+		"A*" | _ => astar::solve(start, solver),
 	}
-	
-	Ok(())
 }
 
 fn main()

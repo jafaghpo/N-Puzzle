@@ -1,6 +1,5 @@
 use indicatif::{ProgressBar, ProgressStyle};
 use colored::*;
-use std::collections::{HashMap, BinaryHeap};
 use std::time::Instant;
 
 use crate::node::Node;
@@ -37,22 +36,18 @@ impl Info
             self.bar = Some(bar);
         }
 
-        match self.bar
+        if let Some(ref bar) = self.bar
         {
-            Some(ref bar) =>
-            {
-                bar.set_position(self.count as u64);
-                self.count += (self.min_h - current_h) as f32;
-                let percent = self.count / (self.max_h as f32) * 100.0;
-                bar.set_message(&format!("{} | open states: {} | closed states: {} | total states: {}",
-                    &format!("{:.2}%", percent).magenta(),
-                    open_size.to_string().green(),
-                    closed_size.to_string().red(),
-                    (open_size + closed_size).to_string().cyan()));
-                self.min_h = current_h;
-            },
-            None => ()
-        };
+            bar.set_position(self.count as u64);
+            self.count += (self.min_h - current_h) as f32;
+            let percent = self.count / (self.max_h as f32) * 100.0;
+            bar.set_message(&format!("{} | open states: {} | closed states: {} | total states: {}",
+                &format!("{:.2}%", percent).magenta(),
+                open_size.to_string().green(),
+                closed_size.to_string().red(),
+                (open_size + closed_size).to_string().cyan()));
+            self.min_h = current_h;
+        }
     }
 }
 
@@ -65,7 +60,7 @@ pub struct Debug
 impl Debug
 {
 
-    pub fn parent(&mut self, mut node: Node, size: usize, open_set: &BinaryHeap<Node>, closed_set: &HashMap<Map, Move>) -> Node
+    pub fn parent(&mut self, mut node: Node, size: usize, open_size: usize, closed_size: usize) -> Node
     {
         let container = Container(node.map, size);
         println!("Parent N°{}", self.parent_count);
@@ -73,8 +68,7 @@ impl Debug
         println!("Costs: f({}) g({}) h({})", node.f, node.g, node.h);
         println!("Position: x({}) y({})", node.pos.x, node.pos.y);
         println!("Move: {:?}", node.movement);
-        println!("Open set: {} | Closed set: {}", open_set.len(), closed_set.len());
-        println!("Open set capacity: {} | Closed set capacity: {}\n", open_set.capacity(), closed_set.capacity());
+        println!("Open set: {} | Closed set: {}", open_size, closed_size);
         self.parent_count += 1;
         self.child_count = 1;
         node.map = container.0;

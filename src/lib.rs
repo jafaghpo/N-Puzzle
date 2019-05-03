@@ -5,10 +5,13 @@ use std::io::Write;
 pub mod solver;
 pub mod node;
 pub mod parser;
-pub mod algorithm;
 pub mod heuristic;
 pub mod generator;
 pub mod display;
+
+pub mod astar;
+pub mod astar_iterative;
+pub mod astar_genetic;
 
 pub type Map = Vec<usize>;
 
@@ -52,7 +55,7 @@ impl fmt::Display for Container
             {
                 0 => to_display.push_str(&format!("{}", self.0[i])),
                 i if i % self.1 == 0 => to_display.push_str(&format!("\n{}", self.0[i])),
-                _ => to_display.push_str(&format!("   {}", self.0[i]))
+                _ => to_display.push_str(&format!("\t{}", self.0[i]))
             }
         }
 		to_display.push_str("\n");

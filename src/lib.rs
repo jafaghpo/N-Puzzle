@@ -11,7 +11,8 @@ pub mod display;
 
 pub mod astar;
 pub mod astar_iterative;
-pub mod astar_genetic;
+pub mod astar_iterative_limited;
+pub mod astar_iterative_deepening;
 
 pub type Map = Vec<usize>;
 

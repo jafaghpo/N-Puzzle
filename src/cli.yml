@@ -27,7 +27,7 @@ args:
         possible_values:
             - A*
             - IA*
-            - GA*
+            - ILA*
             - IDA*
         default_value: A*
         value_names:
@@ -50,10 +50,14 @@ args:
         help: Configure f cost to be equal to g cost (brute force algorithm)
         short: u
         long: uniform
+        conflicts_with:
+            - greedy
     - greedy:
         help: Configure f cost to be equal to h cost (greedy algorithm)
         short: g
         long: greedy
+        conflicts_with:
+            - uniform
     - verbosity:
         help: Display more informations on the solution
         short: -v

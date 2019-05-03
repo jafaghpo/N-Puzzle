@@ -6,7 +6,7 @@ elif [ "$#" -eq 1 ]; then
     echo "A*:" && ./npuzzle $file_path -h conflict -a "A*" \
     && echo "\nIA*:" && ./npuzzle $file_path -h conflict -a "IA*" \
     && echo "\nIDA*:" && ./npuzzle $file_path -h conflict -a "IDA*" \
-    && echo "\nGA*:" && ./npuzzle $file_path -h conflict -a "GA*"
+    && echo "\nGA*:" && ./npuzzle $file_path -h conflict -a "ILA*"
 else
     dir_path=$1;
     goal=$2;
@@ -17,5 +17,5 @@ else
     echo "A*:" && ./npuzzle $dir_path -G $size -i $iter -e $goal -h conflict -a "A*" \
     && echo "\nIA*:" && ./npuzzle $file_path -h conflict -a "IA*" \
     && echo "\nIDA*:" && ./npuzzle $file_path -h conflict -a "IDA*" \
-    && echo "\nGA*:" && ./npuzzle $file_path -h conflict -a "GA*"
+    && echo "\nGA*:" && ./npuzzle $file_path -h conflict -a "ILA*"
 fi

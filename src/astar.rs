@@ -23,8 +23,14 @@ pub fn solve(start: Map, solver: Solver) -> Result<(), String>
 		// Get the node with the lowest f cost
 		let mut current = open_set.pop().unwrap();
 
-		if solver.flag.debug { current = debug.parent(current, solver.size, open_set.len(), closed_set.len()) }
-		else if current.h < info.min_h { info.update(current.h, open_set.len(), closed_set.len()) }
+		if solver.flag.debug
+		{
+			current = debug.parent(current, solver.size, open_set.len(), closed_set.len());
+		}
+		else if solver.flag.uniform == false && current.h < info.min_h
+		{
+			info.update(current.h, open_set.len(), closed_set.len());
+		}
 
 		// If the solution is found
 		if current.h == 0
@@ -32,7 +38,6 @@ pub fn solve(start: Map, solver: Solver) -> Result<(), String>
 			let end_pos = current.pos.clone();
 			let end_move = current.movement.clone();
 			closed_set.insert(current.map, current.movement.clone());
-			if solver.flag.debug == false { info.bar.unwrap().finish() }
 			break (end_pos, end_move)
 		}
 
@@ -53,6 +58,8 @@ pub fn solve(start: Map, solver: Solver) -> Result<(), String>
 		}
 	};
 
+	if solver.flag.debug == false && solver.flag.uniform == false { info.bar.unwrap().finish() }
+
 	let mut solution = Solution::new(open_set.len(), closed_set.len());
 	solution.path = vec![State { map: solver.goal, movement: last_move }];
 	loop
@@ -65,6 +72,6 @@ pub fn solve(start: Map, solver: Solver) -> Result<(), String>
 		solution.path.push(State {map: map, movement: movement });
 	}
 	solution.moves = solution.path.len() - 1;
-	solution.display_all(solver.size, solver.flag.verbosity, solver.time);
+	solution.display(solver.size, solver.flag.verbosity, solver.time, solver.flag.uniform);
 	Ok(())
 }

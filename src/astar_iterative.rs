@@ -42,18 +42,16 @@ pub fn solve(start: Map, solver: Solver) -> Result<(), String>
 
 		if open_max < list.len() { open_max = list.len() }
 		if closed_max < closed_set.len() { closed_max = closed_set.len() }
-		if lowest.h < info.min_h { info.update(lowest.h, open_max, closed_max) }
+		if solver.flag.uniform == false && lowest.h < info.min_h { info.update(lowest.h, open_max, closed_max) }
 
-		if lowest.h == 0
-		{
-			info.bar.unwrap().finish();
-			break list.pop().unwrap()
-		}
+		if lowest.h == 0 { break list.pop().unwrap() }
 		limit = lowest.f;
 
 		open_set = list;
 		iter += 1;
 	};
+
+	if solver.flag.uniform == false { info.bar.unwrap().finish() }
 
 	let mut solution = Solution::new(open_max, closed_max);
 	let mut pos = end_node.pos;
@@ -70,7 +68,7 @@ pub fn solve(start: Map, solver: Solver) -> Result<(), String>
 		state = State { map: map, movement: Move::No };
 	}
 	solution.moves = solution.path.len() - 1;
-	solution.display_all(solver.size, solver.flag.verbosity, solver.time);
+	solution.display(solver.size, solver.flag.verbosity, solver.time, solver.flag.uniform);
 	Ok(())
 }
 

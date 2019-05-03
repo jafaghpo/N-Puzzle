@@ -49,6 +49,37 @@ impl Info
             self.min_h = current_h;
         }
     }
+
+    pub fn update_ida(&mut self, current_h: usize, max_expanded: usize, total_expanded: usize)
+    {
+        if self.bar.is_none()
+        {
+            let bar = ProgressBar::new(self.max_h as u64);
+            bar.set_style(ProgressStyle::default_bar()
+                .template(&format!("{{pos:}} of {:} | {{msg:}}", self.max_h)));
+            self.bar = Some(bar);
+        }
+
+        if let Some(ref bar) = self.bar
+        {
+            bar.set_position(self.count as u64);
+            let percent = match current_h < self.min_h
+            {
+                true =>
+                {
+                    self.count += (self.min_h - current_h) as f32;
+                    self.min_h = current_h;
+                    self.count / (self.max_h as f32) * 100.0
+                }
+                false => self.count / (self.max_h as f32) * 100.0
+            };
+
+            bar.set_message(&format!("{} | max states: {} | total states: {}",
+                &format!("{:.2}%", percent).magenta(),
+                max_expanded.to_string().green(),
+                total_expanded.to_string().red()));
+        }
+    }
 }
 
 pub struct Debug
@@ -114,7 +145,7 @@ impl Solution
 		}
 	}
 
-    pub fn display_all(&mut self, size: usize, verbosity: bool, time: Instant)
+    pub fn display(&mut self, size: usize, verbosity: bool, time: Instant, uniform: bool)
     {
         if verbosity == true
         {
@@ -123,9 +154,31 @@ impl Solution
                 println!("[{}]", state.movement);
                 println!("{}", Container(state.map, size));
             }
+        }
+        if verbosity == true || uniform == true
+        {
             println!("Number of pending states (open set): {}", self.pending.to_string().green());
             println!("Number of selected states (closed set): {}", self.selected.to_string().red());
             println!("Number of states ever represented in memory: {}", self.total.to_string().cyan());
+        }
+        println!("Number of moves: {}", self.moves.to_string().yellow());
+        println!("Execution time: {}", &format!("{:?}", time.elapsed()).bright_blue().bold());
+    }
+
+    pub fn display_ida(&mut self, size: usize, verbosity: bool, time: Instant, uniform: bool)
+    {
+        if verbosity == true
+        {
+            while let Some(state) = self.path.pop()
+            {
+                println!("[{}]", state.movement);
+                println!("{}", Container(state.map, size));
+            }
+        }
+        if verbosity == true || uniform == true
+        {
+            println!("Maximum number of states expanded: {}", self.pending.to_string().green());
+            println!("Total number of states ever expanded: {}", self.selected.to_string().red());
         }
         println!("Number of moves: {}", self.moves.to_string().yellow());
         println!("Execution time: {}", &format!("{:?}", time.elapsed()).bright_blue().bold());

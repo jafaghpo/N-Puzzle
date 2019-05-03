@@ -43,6 +43,10 @@ fn run_program(args: Args, time: Instant) -> Result<(), String>
 	let file = if args.g_size == "None" { args.file } else
 	{
 		let g_size = parse_number(&args.g_size)?;
+		if g_size < 3 || g_size > 1000
+		{
+			return Err("generated puzzle size must be between 3 and 1000".to_owned());
+		}
 		let iter = match args.iter
 		{
 			Some(i) => Some(parse_number(&i)?),

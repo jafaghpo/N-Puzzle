@@ -65,7 +65,7 @@ fn run_program(args: Args, time: Instant) -> Result<(), String>
 
 	match args.algo.as_ref()
 	{
-		"IDA*" => astar_iterative::solve(start, solver),
+		"IDA*" => astar_genetic::solve(start, solver),
 		"IA*" => astar_iterative::solve(start, solver),
 		"GA*" => astar_genetic::solve(start, solver),
 		"A*" | _ => astar::solve(start, solver),

@@ -68,7 +68,7 @@ impl Debug
         println!("Costs: f({}) g({}) h({})", node.f, node.g, node.h);
         println!("Position: x({}) y({})", node.pos.x, node.pos.y);
         println!("Move: {:?}", node.movement);
-        println!("Open set: {} | Closed set: {}", open_size, closed_size);
+        println!("Open set: {} | Closed set: {}\n", open_size, closed_size);
         self.parent_count += 1;
         self.child_count = 1;
         node.map = container.0;

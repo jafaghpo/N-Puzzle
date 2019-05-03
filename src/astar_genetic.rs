@@ -2,11 +2,11 @@ use std::collections::{HashSet, BinaryHeap};
 use crate::{Map, Move};
 use crate::node::Node;
 use crate::solver::Solver;
-use crate::display::{Info, Debug, Solution, State};
+use crate::display::{Info, Solution, State};
 
 pub fn solve(start: Map, solver: Solver) -> Result<(), String>
 {
-	let max_iter = 10;
+	let max_iter = 1000;
 	let mut iter = 1;
 	let mut start = Node::new(start);
 	start.find_position(solver.size);
@@ -14,42 +14,50 @@ pub fn solve(start: Map, solver: Solver) -> Result<(), String>
 	start.move_list.push(Move::No);
 
 	let mut info = Info::new(start.h);
-	let mut debug = Debug { parent_count: 1, child_count: 1 };
 	let mut open_max = 0;
 	let mut closed_max = 0;
 
+	let mut open_set: BinaryHeap<Node> = BinaryHeap::new();
 	let mut limit = start.h;
-    let mut best_node = start;
+	let ratio: f64 = 0.10;
+	let mut nextgen_nodes = 1;
+
+	open_set.push(start);
 
 	let mut end_node = loop
 	{
+		let mut list: BinaryHeap<Node> = BinaryHeap::new();
+		let mut closed_set: HashSet<Map> = HashSet::new();
+
 		if iter > max_iter
 		{
 			return Err(format!("Search exceeded the iteration limit ({}) without finding a solution", max_iter));
 		}
+		for _ in 0..nextgen_nodes
+		{
+			let node = open_set.pop().unwrap();
+			list.append(&mut expand_node(node, iter, limit, &mut closed_set, &solver));
+			let lowest = list.peek().unwrap();
+			if lowest.h == 0 { break }
+		}
 
-        let mut closed_set: HashSet<Map> = HashSet::new();
-        let mut list = expand_node(best_node, iter, limit, &mut closed_set, &solver, &mut debug);
-
-        let lowest = list.peek().unwrap();
-
-		// let lowest = list.peek().unwrap();
+		let lowest = list.peek().unwrap();
 
 		if open_max < list.len() { open_max = list.len() }
 		if closed_max < closed_set.len() { closed_max = closed_set.len() }
-		// println!("iter: {} open size: {} closed size: {} lowest h: {} limit: {}", iter, open_max, closed_max, lowest.h, limit);
-		if solver.flag.debug == false && lowest.h < info.min_h { info.update(lowest.h, open_max, closed_max) }
+		if lowest.h < info.min_h { info.update(lowest.h, open_max, closed_max) }
 
 		if lowest.h == 0
 		{
-            let mut end_node = list.pop().unwrap();
-            if solver.flag.debug { end_node = debug.parent(end_node, solver.size, list.len() + 1, closed_set.len()) }
-			if solver.flag.debug == false { info.bar.unwrap().finish() }
-			break end_node
+			info.bar.unwrap().finish();
+			break list.pop().unwrap()
 		}
+
 		limit = lowest.f;
-		best_node = list.pop().unwrap();
-        if solver.flag.debug { best_node = debug.parent(best_node, solver.size, list.len() + 1, closed_set.len()) }
+
+		if list.len() > 10000 { nextgen_nodes = (ratio * list.len() as f64) as usize }
+		else { nextgen_nodes = list.len() }
+		open_set = list;
 		iter += 1;
 	};
 
@@ -72,7 +80,7 @@ pub fn solve(start: Map, solver: Solver) -> Result<(), String>
 	Ok(())
 }
 
-pub fn expand_node(node: Node, iter: usize, limit: usize, closed_set: &mut HashSet<Map>, solver: &Solver, debug: &mut Debug) -> BinaryHeap<Node>
+pub fn expand_node(node: Node, iter: usize, limit: usize, closed_set: &mut HashSet<Map>, solver: &Solver) -> BinaryHeap<Node>
 {
 	let mut open_set: BinaryHeap<Node> = BinaryHeap::new();
 	let mut node_list: BinaryHeap<Node> = BinaryHeap::new();
@@ -85,12 +93,10 @@ pub fn expand_node(node: Node, iter: usize, limit: usize, closed_set: &mut HashS
 		let mut current = current.unwrap();
 		if current.f > limit
 		{
-			// if current.depth < iter { continue }
+			if current.depth < iter { continue }
 			node_list.push(current);
 			continue
 		}
-
-		// if solver.flag.debug { current = debug.parent(current, solver.size, open_set.len(), closed_set.len()) }
 
 		// If the solution is found
 		if current.h == 0
@@ -99,7 +105,6 @@ pub fn expand_node(node: Node, iter: usize, limit: usize, closed_set: &mut HashS
 			node_list.push(current);
 			break
 		}
-        // println!("here");
 
 		// Get the list of possible moves
 		let moves: Vec<Node> = current.generate_moves(solver.size);
@@ -112,8 +117,6 @@ pub fn expand_node(node: Node, iter: usize, limit: usize, closed_set: &mut HashS
 			node.move_list = current.move_list.clone();
 			node.move_list.push(node.movement.clone());
 			node.depth = iter;
-
-			// if solver.flag.debug { debug.child(&node) }
 
 			if limit < node.f { node_list.push(node) }
 			else { open_set.push(node) }

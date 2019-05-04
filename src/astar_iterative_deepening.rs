@@ -28,17 +28,17 @@ pub fn solve(start: Map, mut solver: Solver) -> Result<(), String>
         let res = find_path(&start, 0, bound, &solver);
         if res.expanded > max_expanded { max_expanded = res.expanded }
         total_expanded += res.expanded;
-        if solver.flag.uniform == false { info.update_ida(res.best_h, max_expanded, total_expanded) }
+        info.update_ida(res.best_h, max_expanded, total_expanded);
         if res.path.is_some() { break res }
         if res.bound == max_bound { return Err("solution not found".to_owned()) }
         bound = res.bound;
     };
 
-    if solver.flag.uniform == false { info.bar.unwrap().finish() }
+    info.bar.unwrap().finish();
     let mut solution = Solution::new(max_expanded, total_expanded);
     solution.path = result.path.unwrap();
     solution.moves = solution.path.len() - 1;
-    solution.display_ida(solver.size, solver.flag.verbosity, solver.time, solver.flag.uniform);
+    solution.display_ida(solver.size, solver.flag.verbosity, solver.time);
     Ok(())
 }
 

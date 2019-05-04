@@ -1,4 +1,5 @@
 use std::collections::{HashSet, BinaryHeap};
+use colored::*;
 use crate::{Map, Move};
 use crate::node::Node;
 use crate::solver::Solver;
@@ -6,58 +7,99 @@ use crate::display::{Info, Solution, State};
 
 pub fn solve(start: Map, solver: Solver) -> Result<(), String>
 {
-	let max_iter = 1000;
-	let mut iter = 1;
 	let mut start = Node::new(start);
 	start.find_position(solver.size);
 	start = solver.get_cost(start);
 	start.move_list.push(Move::No);
 
+	// Regulate number of nodes to explore for each iterations
+	let mut node_limit = match start.h
+	{
+		0...50 => 1000,
+		51...100 => 3000,
+		101...300 => 5000,
+		301...500 => 8000,
+		_ => 10000
+	};
+
+	let no_change_limit = 75;
+	let mut no_change_iter = 0;
+	let mut increase_limit = 2000;
+	let mut nextgen_nodes = 1;
+
 	let mut info = Info::new(start.h);
 	let mut open_max = 0;
 	let mut closed_max = 0;
-
 	let mut open_set: BinaryHeap<Node> = BinaryHeap::new();
 	let mut limit = start.h;
-	let ratio: f64 = 0.3;
-	let mut nextgen_nodes = 1;
-
-	open_set.push(start);
+	let max_iter = 1000;
+	open_set.push(start.clone());
 
 	let mut end_node = loop
 	{
 		let mut list: BinaryHeap<Node> = BinaryHeap::new();
 		let mut closed_set: HashSet<Map> = HashSet::new();
 
-		if iter > max_iter
+		if info.iter > max_iter
 		{
 			return Err(format!("Search exceeded the iteration limit ({}) without finding a solution", max_iter));
 		}
 		for _ in 0..nextgen_nodes
 		{
 			let node = open_set.pop().unwrap();
-			list.append(&mut expand_node(node, iter, limit, &mut closed_set, &solver));
+			list.append(&mut expand_node(node, info.iter, limit, &mut closed_set, &solver));
 			let lowest = list.peek().unwrap();
 			if lowest.h == 0 { break }
 		}
 
 		let lowest = list.peek().unwrap();
 
-		if list.len() > 10000 { nextgen_nodes = (ratio * list.len() as f64) as usize }
-		else { nextgen_nodes = list.len() }
-
 		if open_max < list.len() { open_max = list.len() }
 		if closed_max < closed_set.len() { closed_max = closed_set.len() }
-		if solver.flag.uniform == false && lowest.h < info.min_h { info.update(lowest.h, open_max, closed_max) }
-
-		if lowest.h == 0 { break list.pop().unwrap() }
+		let mut lowest_h = lowest.h;
 
 		limit = lowest.f;
 		open_set = list;
-		iter += 1;
+
+		nextgen_nodes = match open_set.len() > node_limit
+		{
+			false => open_set.len(),
+			true => match lowest_h < info.min_h
+			{
+				true =>
+				{
+					no_change_iter = 0;
+					node_limit
+				}
+				false if no_change_iter < no_change_limit =>
+				{
+					no_change_iter += 1;
+					node_limit
+				}
+				_ =>
+				{
+					no_change_iter = 0;
+					open_set.clear();
+					open_set.push(start.clone());
+					node_limit += increase_limit;
+					limit = start.h;
+					lowest_h = start.h;
+					open_max = 0;
+					closed_max = 0;
+					info = Info::new(start.h);
+					println!("Dead end. Reseting search and increasing limit nodes by {}", increase_limit.to_string().green());
+					increase_limit += increase_limit / 2;
+					1
+				}
+			}
+		};
+
+		info.update_ila(lowest_h, nextgen_nodes, open_max, closed_max);
+
+		if lowest_h == 0 { break open_set.pop().unwrap() }
 	};
 
-	if solver.flag.uniform == false { info.bar.unwrap().finish() }
+	info.bar.unwrap().finish();
 
 	let mut solution = Solution::new(open_max, closed_max);
 	let mut pos = end_node.pos;
@@ -74,7 +116,7 @@ pub fn solve(start: Map, solver: Solver) -> Result<(), String>
 		state = State { map: map, movement: Move::No };
 	}
 	solution.moves = solution.path.len() - 1;
-	solution.display(solver.size, solver.flag.verbosity, solver.time, solver.flag.uniform);
+	solution.display(solver.size, solver.flag.verbosity, solver.time);
 	Ok(())
 }
 

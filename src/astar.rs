@@ -27,7 +27,7 @@ pub fn solve(start: Map, solver: Solver) -> Result<(), String>
 		{
 			current = debug.parent(current, solver.size, open_set.len(), closed_set.len());
 		}
-		else if solver.flag.uniform == false && current.h < info.min_h
+		else if current.h < info.min_h
 		{
 			info.update(current.h, open_set.len(), closed_set.len());
 		}
@@ -58,7 +58,7 @@ pub fn solve(start: Map, solver: Solver) -> Result<(), String>
 		}
 	};
 
-	if solver.flag.debug == false && solver.flag.uniform == false { info.bar.unwrap().finish() }
+	if solver.flag.debug == false { info.bar.unwrap().finish() }
 
 	let mut solution = Solution::new(open_set.len(), closed_set.len());
 	solution.path = vec![State { map: solver.goal, movement: last_move }];
@@ -67,11 +67,16 @@ pub fn solve(start: Map, solver: Solver) -> Result<(), String>
 		let last = solution.path.last().unwrap();
 		if last.movement == Move::No { break }
 		let map = last.movement.opposite().do_move(last.map.clone(), &last_pos, solver.size);
-		let movement = closed_set.remove(&map).unwrap();
+		let movement = closed_set.remove(&map);
+		if movement.is_none()
+		{
+			return Err("found a solution but was unable to reconstruct the path".to_owned());
+		}
+		let movement = movement.unwrap();
 		last_pos = last_pos.update(&last.movement.opposite());
 		solution.path.push(State {map: map, movement: movement });
 	}
 	solution.moves = solution.path.len() - 1;
-	solution.display(solver.size, solver.flag.verbosity, solver.time, solver.flag.uniform);
+	solution.display(solver.size, solver.flag.verbosity, solver.time);
 	Ok(())
 }

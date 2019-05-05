@@ -5,17 +5,26 @@ use crate::Container;
 // Open an copy the file content into a string
 fn get_file_content(filename: &str) -> Result<String, String>
 {
+	let max_size = 10000000;
+
+	let metadata = match fs::metadata(filename)
+	{
+		Ok(m) => Ok(m),
+		Err(_) => Err(format!("'{}' doesn't exist", filename))
+	}?;
+
+	if metadata.is_file() == false { return Err(format!("'{}' is not a file", filename)) }
+	match metadata.len()
+	{
+		size if size >= max_size => return Err(format!("'{}' is over 10MB and thus cannot be accepted", filename)),
+		0 => return Err(format!("'{}' has a size of 0", filename)),
+		_ => ()
+	};
+
 	match fs::read_to_string(filename)
 	{
-		Ok(file) =>
-		{
-			match file.is_empty()
-			{
-				true => Err(format!("file is empty")),
-				false => Ok(file)
-			}
-		}
-		Err(_) => Err(format!("invalid file path"))
+		Ok(file) => Ok(file),
+		Err(_) => Err(format!("unable to read '{}'", filename))
 	}
 }
 

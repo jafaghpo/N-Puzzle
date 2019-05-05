@@ -41,7 +41,7 @@ args:
             - manhattan
             - conflict
             - axes
-        default_value: manhattan
+        default_value: conflict
         value_names:
             - type
 

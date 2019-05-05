@@ -15,10 +15,8 @@ pub fn solve(start: Map, solver: Solver) -> Result<(), String>
 	// Regulate number of nodes to explore for each iterations
 	let mut node_limit = match start.h
 	{
-		0...50 => 1000,
-		51...100 => 3000,
-		101...300 => 5000,
-		301...500 => 8000,
+		0...20 => 1000,
+		21...40 => 5000,
 		_ => 10000
 	};
 
@@ -93,7 +91,6 @@ pub fn solve(start: Map, solver: Solver) -> Result<(), String>
 				}
 			}
 		};
-
 		info.update_ila(lowest_h, nextgen_nodes, open_max, closed_max);
 
 		if lowest_h == 0 { break open_set.pop().unwrap() }

@@ -16,8 +16,8 @@ pub fn solve(start: Map, solver: Solver) -> Result<(), String>
 	let mut node_limit = match start.h
 	{
 		0...20 => 1000,
-		21...40 => 5000,
-		_ => 10000
+		21...40 => 3000,
+		_ => 5000
 	};
 
 	let no_change_limit = 75;

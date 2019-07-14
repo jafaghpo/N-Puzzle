@@ -44,10 +44,10 @@ fn file_to_map(file: String) -> Result<(usize, Vec<usize>), String>
 	{
 		Ok(s) =>
 		{
-			match (s >= 3, s <= 10)
+			match (s >= 3, s <= 20)
 			{
 				(false, true) => Err(format!("size is too small, must be at least 3")),
-				(true, false) => Err(format!("size is too big, must be equal or below 10")),
+				(true, false) => Err(format!("size is too big, must be equal or below 20")),
 				(true, true) | _ => Ok(s)
 			}
 		}
